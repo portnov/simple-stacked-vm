@@ -10,6 +10,7 @@ data StackItem =
     SInteger Integer
   | SString String
   | SInstruction Instruction
+  | Quote StackItem
   deriving (Eq, Show, Data, Typeable)
 
 showType :: StackItem -> String
@@ -19,6 +20,7 @@ showItem :: StackItem -> String
 showItem (SInteger x) = show x
 showItem (SString x) = x
 showItem (SInstruction x) = show x
+showItem (Quote x) = "'" ++ show x
 
 type Stack = [StackItem]
 
@@ -85,6 +87,7 @@ instance Show Instruction where
 
 data VMState = VMState {
   vmStack :: Stack,
+  vmCurrentDefinition :: Stack,
   vmDefinitions :: M.Map String [StackItem]
   }
   deriving (Eq, Show)
@@ -92,6 +95,7 @@ data VMState = VMState {
 emptyVMState :: VMState
 emptyVMState = VMState {
   vmStack = [],
+  vmCurrentDefinition = [],
   vmDefinitions = M.empty }
 
 type Forth a = StateT VMState IO a

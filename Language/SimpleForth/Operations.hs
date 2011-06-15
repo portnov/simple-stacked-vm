@@ -31,6 +31,17 @@ push x = withStack (toStack x:)
 pushS :: StackItem -> Forth ()
 pushS x = withStack (x:)
 
+pushD :: StackItem -> Forth ()
+pushD x = do
+  st <- get
+  let def = vmCurrentDefinition st
+  put $ st {vmCurrentDefinition = (x:def)}
+
+endDef :: Forth ()
+endDef = do
+  st <- get
+  put $ st {vmCurrentDefinition = []}
+
 pop :: Forth ()
 pop = withStackM pop'
   where
@@ -54,6 +65,12 @@ printStack :: Forth ()
 printStack = do
   stk <- gets vmStack
   lift $ putStrLn $ unwords $ map showItem stk
+
+printCurrentDef :: Forth ()
+printCurrentDef = do
+  def <- gets vmCurrentDefinition
+  lift $ putStr "Current definition: "
+  lift $ putStrLn $ unwords $ map showItem def
 
 getStack :: Forth StackItem
 getStack = do
@@ -116,27 +133,24 @@ printF = do
 
 define :: Forth ()
 define = do
-    name <- getArg
-    ws <- getToColon
-    st <- get
-    dict <- gets vmDefinitions
-    let dict' = M.insert name ws dict
-    put $ st {vmDefinitions = dict'}
-  where
-    getToColon :: Forth [StackItem]
-    getToColon = do
-      x <- getStack
-      if x == SInstruction COLON
-        then return [x]
-        else do
-             next <- getToColon
-             return (x:next)
+    ws <- gets vmCurrentDefinition
+    endDef
+    w <- getStack
+    case w of
+      SString name -> do
+        st <- get
+        dict <- gets vmDefinitions
+        let dict' = M.insert name (init ws) dict
+        put $ st {vmDefinitions = dict'}
+      x -> fail $ "New word name is " ++ showType x ++ ", not String!"
 
 recall :: Forth [StackItem]
 recall = do
   name <- getArg
+  lift $ putStr "recall: "
+  printStack
   dict <- gets vmDefinitions
   case M.lookup name dict of
     Nothing -> fail $ "Unknown word: " ++ name
-    Just list -> return list
+    Just list -> return (reverse list)
 

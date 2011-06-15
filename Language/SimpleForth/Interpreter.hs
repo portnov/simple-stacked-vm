@@ -44,4 +44,4 @@ eval NEG      = neg
 eval ABS      = absF
 eval DEFINE   = define
 eval COLON    = push COLON
-eval CALL     = traceStack =<< recall
+eval CALL     = interpret =<< recall

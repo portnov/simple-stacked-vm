@@ -140,15 +140,13 @@ define = do
       SString name -> do
         st <- get
         dict <- gets vmDefinitions
-        let dict' = M.insert name (init ws) dict
+        let dict' = M.insert name ws dict
         put $ st {vmDefinitions = dict'}
       x -> fail $ "New word name is " ++ showType x ++ ", not String!"
 
 recall :: Forth [StackItem]
 recall = do
   name <- getArg
-  lift $ putStr "recall: "
-  printStack
   dict <- gets vmDefinitions
   case M.lookup name dict of
     Nothing -> fail $ "Unknown word: " ++ name

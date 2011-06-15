@@ -44,4 +44,4 @@ eval NEG      = neg
 eval ABS      = absF
 eval DEFINE   = define
 eval COLON    = push COLON
-eval CALL     = interpret =<< recall
+eval (CALL s) = interpret =<< recall s

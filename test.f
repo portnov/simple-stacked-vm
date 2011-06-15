@@ -1,2 +1,3 @@
-: DOUBLE DUP + ;
-5 DOUBLE .
+: SQR DUP * ;
+: FOURTH SQR SQR ;
+3 FOURTH .

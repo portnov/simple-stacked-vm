@@ -33,7 +33,7 @@ instance Binary Instruction where
   put ABS      = byte 13
   put DEFINE   = byte 14
   put COLON    = byte 15
-  put CALL     = byte 16
+  put (CALL s) = byte 16 >> put s
 
   get = do
     c <- getWord8
@@ -54,13 +54,14 @@ instance Binary Instruction where
       13 -> return ABS
       14 -> return DEFINE
       15 -> return COLON
-      16 -> return CALL
+      16 -> CALL <$> get
       _ -> fail $ "Unknown opcode: " ++ show c
 
 instance Binary StackItem where
   put (SInteger x)     = char 'I' >> put x
   put (SString x)      = char 'S' >> put x
   put (SInstruction x) = char 'O' >> put x
+  put (Quote x)        = char 'Q' >> put x
 
   get = do
     c <- getChar8
@@ -68,4 +69,5 @@ instance Binary StackItem where
       'I' -> SInteger <$> get
       'S' -> SString <$> get
       'O' -> SInstruction <$> get
+      'Q' -> Quote <$> get
 

@@ -144,9 +144,8 @@ define = do
         put $ st {vmDefinitions = dict'}
       x -> fail $ "New word name is " ++ showType x ++ ", not String!"
 
-recall :: Forth [StackItem]
-recall = do
-  name <- getArg
+recall :: String -> Forth [StackItem]
+recall name = do
   dict <- gets vmDefinitions
   case M.lookup name dict of
     Nothing -> fail $ "Unknown word: " ++ name

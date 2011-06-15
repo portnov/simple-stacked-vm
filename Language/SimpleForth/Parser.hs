@@ -13,7 +13,16 @@ baseLanguage = haskell
 one :: a -> [a]
 one x = [x]
 
-type TParser a = Parsec String Bool a
+data ParserState = PState {
+  inDefinition :: Bool,
+  newWord :: Bool }
+  deriving (Eq, Show)
+
+emptyState = PState {
+  inDefinition = False,
+  newWord = False }
+
+type TParser a = Parsec String ParserState a
 
 pString :: TParser [StackItem]
 pString = one <$> SString <$> stringLiteral baseLanguage
@@ -30,8 +39,8 @@ pInteger = do
 
 instr :: Instruction -> TParser [StackItem]
 instr i = do
-  defMode <- getState
-  if defMode
+  st <- getState
+  if inDefinition st
     then return [Quote (SInstruction i)]
     else return [SInstruction i]
 
@@ -52,13 +61,17 @@ pWord = do
     "REM" ->  instr REM
     "NEG" ->  instr NEG
     "ABS" ->  instr ABS
-    ";" ->    putState False >> return [SInstruction DEFINE]
-    ":" ->    putState True >> return []
+    ";" ->    putState (PState False False) >> return [SInstruction DEFINE]
+    ":" ->    putState (PState True True) >> return []
     _ -> do
-         defMode <- getState
-         if defMode
-           then return [SString word]
-           else return [SString word, SInstruction CALL]
+         st <- getState
+         if newWord st
+           then do
+                putState $ st {newWord = False}
+                return [SString word]
+           else if inDefinition st
+                  then return [Quote $ SInstruction $ CALL word]
+                  else return [SInstruction $ CALL word]
 
 pSpaces :: TParser [StackItem]
 pSpaces = do
@@ -71,10 +84,10 @@ pForth = do
   return (concat ws)
 
 parseForth :: FilePath -> String -> Either ParseError Stack
-parseForth name str = runParser pForth False name str
+parseForth name str = runParser pForth emptyState name str
 
 parseForthFile :: FilePath -> IO (Either ParseError Stack)
 parseForthFile path = do
   str <- readFile path
-  return $ runParser pForth False path str
+  return $ runParser pForth emptyState path str
 

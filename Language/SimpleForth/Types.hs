@@ -63,7 +63,7 @@ data Instruction =
   | ABS
   | DEFINE
   | COLON
-  | CALL
+  | CALL String
   deriving (Eq, Data, Typeable)
 
 instance Show Instruction where
@@ -83,7 +83,7 @@ instance Show Instruction where
   show ABS      = "ABS"
   show DEFINE   = ";"
   show COLON    = ":"
-  show CALL     = "CALL"
+  show (CALL s) = "<CALL " ++ s ++ ">"
 
 data VMState = VMState {
   vmStack :: Stack,

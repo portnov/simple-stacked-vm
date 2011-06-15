@@ -1,3 +1,8 @@
 : SQR DUP * ;
 : FOURTH SQR SQR ;
+: NEWLINE "\n" . ;
+
 3 FOURTH .
+NEWLINE
+"Hello" .
+NEWLINE

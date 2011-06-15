@@ -58,10 +58,10 @@ instance Binary Instruction where
       _ -> fail $ "Unknown opcode: " ++ show c
 
 instance Binary StackItem where
-  put (SInteger x)     = char 'I' >> put x
-  put (SString x)      = char 'S' >> put x
-  put (SInstruction x) = char 'O' >> put x
-  put (Quote x)        = char 'Q' >> put x
+  put (SInteger x)     = put 'I' >> put x
+  put (SString x)      = put 'S' >> put x
+  put (SInstruction x) = put 'O' >> put x
+  put (Quote x)        = put 'Q' >> put x
 
   get = do
     c <- getChar8

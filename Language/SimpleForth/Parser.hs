@@ -10,9 +10,6 @@ import Language.SimpleForth.Types
 
 baseLanguage = haskell
 
-one :: a -> [a]
-one x = [x]
-
 data ParserState = PState {
   inDefinition :: Bool,
   newWord :: Bool }
@@ -25,7 +22,12 @@ emptyState = PState {
 type TParser a = Parsec String ParserState a
 
 pString :: TParser [StackItem]
-pString = one <$> SString <$> stringLiteral baseLanguage
+pString = do
+  st <- getState
+  str <- SString <$> stringLiteral baseLanguage
+  if inDefinition st
+    then return [Quote str]
+    else return [str]
 
 pInteger :: TParser [StackItem]
 pInteger = do
@@ -35,7 +37,10 @@ pInteger = do
       n = case m of
             Nothing -> s
             Just _  -> -s
-  return [SInteger n]
+  st <- getState
+  if inDefinition st
+    then return [Quote $ SInteger n]
+    else return [SInteger n]
 
 instr :: Instruction -> TParser [StackItem]
 instr i = do

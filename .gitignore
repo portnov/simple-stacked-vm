@@ -1,0 +1,6 @@
+*.hi
+*.o
+*.swp
+.*.swp
+*.bytecode
+forth

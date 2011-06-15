@@ -22,18 +22,19 @@ instance Binary Instruction where
   put DROP     = byte 2
   put DUP      = byte 3
   put SWAP     = byte 4
-  put PRINT    = byte 5
-  put PRINTALL = byte 6
-  put ADD      = byte 7
-  put MUL      = byte 8
-  put DIV      = byte 9
-  put REM      = byte 10
-  put SUB      = byte 11
-  put NEG      = byte 12
-  put ABS      = byte 13
-  put DEFINE   = byte 14
-  put COLON    = byte 15
-  put (CALL s) = byte 16 >> put s
+  put OVER     = byte 5
+  put PRINT    = byte 6
+  put PRINTALL = byte 7
+  put ADD      = byte 8
+  put MUL      = byte 9
+  put DIV      = byte 10
+  put REM      = byte 11
+  put SUB      = byte 12
+  put NEG      = byte 13
+  put ABS      = byte 14
+  put DEFINE   = byte 15
+  put COLON    = byte 16
+  put (CALL s) = byte 17 >> put s
 
   get = do
     c <- getWord8
@@ -43,18 +44,19 @@ instance Binary Instruction where
       2 -> return DROP
       3 -> return DUP
       4 -> return SWAP
-      5 -> return PRINT
-      6 -> return PRINTALL
-      7 -> return ADD
-      8 -> return MUL
-      9 -> return DIV
-      10 -> return REM
-      11 -> return SUB
-      12 -> return NEG
-      13 -> return ABS
-      14 -> return DEFINE
-      15 -> return COLON
-      16 -> CALL <$> get
+      5 -> return OVER
+      6 -> return PRINT
+      7 -> return PRINTALL
+      8 -> return ADD
+      9 -> return MUL
+      10 -> return DIV
+      11 -> return REM
+      12 -> return SUB
+      13 -> return NEG
+      14 -> return ABS
+      15 -> return DEFINE
+      16 -> return COLON
+      17 -> CALL <$> get
       _ -> fail $ "Unknown opcode: " ++ show c
 
 instance Binary StackItem where

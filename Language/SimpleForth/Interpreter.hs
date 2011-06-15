@@ -33,6 +33,7 @@ eval (PUSH x) = pushS x
 eval DROP     = pop
 eval DUP      = dup
 eval SWAP     = swap
+eval OVER     = over
 eval PRINT    = printF
 eval PRINTALL = printStack
 eval ADD      = add

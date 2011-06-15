@@ -61,6 +61,13 @@ swap = withStackM swap'
     swap' [_] = fail "SWAP on single-element stack!"
     swap' (x:y:xs) = return (y:x:xs)
 
+over :: Forth ()
+over = withStackM over'
+  where
+    over' [] = fail "OVER on empty stack!"
+    over' [_] = fail "OVER on single-element stack!"
+    over' (x:y:xs) = return (y:x:y:xs)
+
 printStack :: Forth ()
 printStack = do
   stk <- gets vmStack
@@ -70,7 +77,7 @@ printCurrentDef :: Forth ()
 printCurrentDef = do
   def <- gets vmCurrentDefinition
   lift $ putStr "Current definition: "
-  lift $ putStrLn $ unwords $ map showItem def
+  lift $ putStrLn $ unwords $ map showItem (reverse def)
 
 getStack :: Forth StackItem
 getStack = do

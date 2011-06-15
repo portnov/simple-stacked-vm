@@ -52,6 +52,7 @@ data Instruction =
   | DROP
   | DUP
   | SWAP
+  | OVER
   | PRINT
   | PRINTALL
   | ADD
@@ -72,6 +73,7 @@ instance Show Instruction where
   show DROP     = "DROP"
   show DUP      = "DUP"
   show SWAP     = "SWAP"
+  show OVER     = "OVER"
   show PRINT    = "."
   show PRINTALL = ".."
   show ADD      = "+"

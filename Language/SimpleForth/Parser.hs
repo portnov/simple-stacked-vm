@@ -57,6 +57,7 @@ pWord = do
     "DROP" -> instr DROP
     "DUP" ->  instr DUP
     "SWAP" -> instr SWAP
+    "OVER" -> instr OVER
     "." ->    instr PRINT
     ".." ->   instr PRINTALL
     "+" ->    instr ADD

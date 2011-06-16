@@ -2,34 +2,53 @@
 module Language.SimpleForth.Parser where
 
 import Control.Applicative hiding ((<|>))
+import Data.Monoid
+import qualified Data.Map as M
 import Text.Parsec
 import Text.Parsec.Token
 import Text.Parsec.Language
 
 import Language.SimpleForth.Types
 
+import Debug.Trace
+
 baseLanguage = haskell
 
 data ParserState = PState {
   inDefinition :: Bool,
-  newWord :: Bool }
+  newWord :: Bool,
+  wordsCounter :: Int }
   deriving (Eq, Show)
 
 emptyState = PState {
   inDefinition = False,
-  newWord = False }
+  newWord = False,
+  wordsCounter = 0 }
 
 type TParser a = Parsec String ParserState a
 
-pString :: TParser [StackItem]
+code :: [StackItem] -> TParser Code
+code list = return $ Code M.empty list
+
+startDefinition :: TParser ()
+startDefinition = do
+  st <- getState
+  putState $ st {inDefinition = True, newWord = True}
+
+endDefinition :: TParser ()
+endDefinition = do
+  st <- getState
+  putState $ st {inDefinition = False, newWord = False}
+
+pString :: TParser Code
 pString = do
   st <- getState
   str <- SString <$> stringLiteral baseLanguage
   if inDefinition st
-    then return [Quote str]
-    else return [str]
+    then code [Quote str]
+    else code [str]
 
-pInteger :: TParser [StackItem]
+pInteger :: TParser Code
 pInteger = do
   m <- optionMaybe (char '-')
   digits <- many1 digit
@@ -39,17 +58,23 @@ pInteger = do
             Just _  -> -s
   st <- getState
   if inDefinition st
-    then return [Quote $ SInteger n]
-    else return [SInteger n]
+    then code [Quote $ SInteger n]
+    else code [SInteger n]
 
-instr :: Instruction -> TParser [StackItem]
+addMark :: String -> TParser Code
+addMark name = do
+  st <- getState
+  let addr = wordsCounter st
+  return $ Code (M.singleton name addr) []
+
+instr :: Instruction -> TParser Code
 instr i = do
   st <- getState
   if inDefinition st
-    then return [Quote (SInstruction i)]
-    else return [SInstruction i]
+    then code [Quote (SInstruction i)]
+    else code [SInstruction i]
 
-pWord :: TParser [StackItem]
+pWord :: TParser Code
 pWord = do
   word <- many1 (noneOf " \t\r\n")
   case word of
@@ -67,36 +92,62 @@ pWord = do
     "REM" ->  instr REM
     "NEG" ->  instr NEG
     "ABS" ->  instr ABS
-    ";" ->    putState (PState False False) >> return [SInstruction DEFINE]
-    ":" ->    putState (PState True True) >> return []
-    "VARIABLE" -> putState (PState False False) >> return [SInstruction VARIABLE]
+    "CMP" ->  instr CMP
+    ";" ->    endDefinition >> code [SInstruction DEFINE]
+    ":" ->    startDefinition >> code []
+    "VARIABLE" -> endDefinition >> code [SInstruction VARIABLE]
     "!" ->    instr ASSIGN
     "@" ->    instr READ
     "INPUT" -> instr INPUT
-    _ -> do
+    "MARK" -> instr MARK
+    "GOTO" -> instr GOTO
+    "JZ"   -> instr JZ
+    "JNZ"  -> instr JNZ
+    "JGT"  -> instr JGT
+    "JLT"  -> instr JLT
+    "JGE"  -> instr JGE
+    "JLE"  -> instr JLE
+    _ | head word == '@' -> instr (GETMARK $ tail word)
+      | otherwise -> do
          st <- getState
          if newWord st
            then do
                 putState $ st {newWord = False}
-                return [SString word]
+                code [SString word]
            else if inDefinition st
-                  then return [Quote $ SInstruction $ CALL word]
-                  else return [SInstruction $ CALL word]
+                  then code [Quote $ SInstruction $ CALL word]
+                  else code [SInstruction $ CALL word]
 
-pSpaces :: TParser [StackItem]
+pLabel :: TParser Code
+pLabel = do
+  char '.'
+  name <- many1 (noneOf ". \t\r\n")
+  addMark name
+
+step :: Int -> TParser ()
+step k = do
+  st <- getState
+  putState $ st {wordsCounter = k + wordsCounter st}
+
+pSpaces :: TParser Code
 pSpaces = do
   many1 (oneOf " \t\r\n")
-  return []
+  code []
 
-pForth :: TParser [StackItem]
+pForth :: TParser Code
 pForth = do
-  ws <- many1 (try pSpaces <|> try pString <|> try pInteger <|> pWord)
-  return (concat ws)
+    ws <- many1 anyWord
+    return (mconcat ws)
+  where
+    anyWord = do
+      word <- (try pSpaces <|> try pString <|> try pInteger <|> try pLabel <|> pWord)
+      step (length $ cCode word)
+      return word
 
-parseForth :: FilePath -> String -> Either ParseError Stack
+parseForth :: FilePath -> String -> Either ParseError Code
 parseForth name str = runParser pForth emptyState name str
 
-parseForthFile :: FilePath -> IO (Either ParseError Stack)
+parseForthFile :: FilePath -> IO (Either ParseError Code)
 parseForthFile path = do
   str <- readFile path
   return $ runParser pForth emptyState path str

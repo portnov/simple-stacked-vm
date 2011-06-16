@@ -4,6 +4,7 @@ module Language.SimpleForth.Types where
 import Control.Monad
 import Control.Monad.State
 import Data.Data
+import Data.Monoid
 import qualified Data.Map as M
 
 data StackItem =
@@ -23,6 +24,17 @@ showItem (SInstruction x) = show x
 showItem (Quote x) = "'" ++ show x
 
 type Stack = [StackItem]
+
+type Marks = M.Map String Int
+
+data Code = Code {
+  cMarks :: Marks,
+  cCode :: [StackItem] }
+  deriving (Eq, Show, Data, Typeable)
+
+instance Monoid Code where
+  mempty = Code M.empty []
+  mappend (Code m1 c1) (Code m2 c2) = Code (M.union m1 m2) (c1 ++ c2)
 
 class (Data a, Typeable a) => StackType a where
   toStack :: a -> StackItem
@@ -62,6 +74,7 @@ data Instruction =
   | SUB
   | NEG
   | ABS
+  | CMP
   | DEFINE
   | COLON
   | CALL String
@@ -69,6 +82,15 @@ data Instruction =
   | ASSIGN
   | READ
   | INPUT
+  | MARK
+  | GETMARK String
+  | GOTO
+  | JZ
+  | JNZ
+  | JGT
+  | JLT
+  | JGE
+  | JLE
   deriving (Eq, Data, Typeable)
 
 instance Show Instruction where
@@ -87,6 +109,7 @@ instance Show Instruction where
   show SUB      = "-"
   show NEG      = "NEG"
   show ABS      = "ABS"
+  show CMP      = "CMP"
   show DEFINE   = ";"
   show COLON    = ":"
   show (CALL s) = "<CALL " ++ s ++ ">"
@@ -94,13 +117,23 @@ instance Show Instruction where
   show ASSIGN   = "!"
   show READ     = "@"
   show INPUT    = "INPUT"
+  show MARK     = "MARK"
+  show (GETMARK x) = "<GETMARK " ++ x ++ ">"
+  show GOTO     = "GOTO"
+  show JZ       = "JZ"
+  show JNZ      = "JNZ"
+  show JGT      = "JGT"
+  show JLT      = "JLT"
+  show JGE      = "JGE"
+  show JLE      = "JLE"
 
 data VMState = VMState {
   vmStack :: Stack,
   vmCurrentDefinition :: Stack,
   vmDefinitions :: M.Map String [StackItem],
   vmVariables :: M.Map Int StackItem,
-  vmNextVariable :: Int
+  vmNextVariable :: Int,
+  vmPC :: Int
   }
   deriving (Eq, Show)
 
@@ -110,7 +143,8 @@ emptyVMState = VMState {
   vmCurrentDefinition = [],
   vmDefinitions = M.empty,
   vmVariables = M.empty,
-  vmNextVariable = 0 }
+  vmNextVariable = 0,
+  vmPC = 0 }
 
 type Forth a = StateT VMState IO a
 

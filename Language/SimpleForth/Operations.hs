@@ -9,6 +9,12 @@ import Control.Monad.State
 
 import Language.SimpleForth.Types
 
+step :: Forth ()
+step = do
+  st <- get
+  let was = vmPC st
+  put $ st {vmPC = was + 1}
+
 withStack :: (Stack -> Stack) -> Forth ()
 withStack fn = do
   st <- get
@@ -135,6 +141,20 @@ divide = liftF2 (div :: Integer -> Integer -> Integer)
 remF :: Forth ()
 remF = liftF2 (mod :: Integer -> Integer -> Integer)
 
+cmpF :: Forth ()
+cmpF = do
+    x <- getStack
+    y <- getStack
+    case (x,y) of
+      (SInteger a, SInteger b) -> push (cmp a b)
+      (SString a, SString b) -> push (cmp a b)
+  where
+    cmp :: (Ord a) => a -> a -> Integer
+    cmp a b = case compare a b of
+               LT -> -1
+               EQ -> 0
+               GT -> 1
+
 printF :: Forth ()
 printF = do
   x <- getStack
@@ -153,12 +173,12 @@ define = do
         put $ st {vmDefinitions = dict'}
       x -> fail $ "New word name is " ++ showType x ++ ", not String!"
 
-recall :: String -> Forth [StackItem]
+recall :: String -> Forth Code
 recall name = do
   dict <- gets vmDefinitions
   case M.lookup name dict of
     Nothing -> fail $ "Unknown word: " ++ name
-    Just list -> return (reverse list)
+    Just list -> return $ Code M.empty (reverse list)
 
 variable :: Forth ()
 variable = do
@@ -191,3 +211,33 @@ input = do
     then pushS (SInteger $ read str)
     else pushS (SString str)
 
+mark :: Forth ()
+mark = do
+  pc <- gets vmPC
+  pushS (SInteger $ fromIntegral pc)
+
+branch :: Int -> Forth ()
+branch n = do
+  st <- get
+  put $ st {vmPC = n}
+
+goto :: Forth ()
+goto = do
+  n <- getArg :: Forth Integer
+  branch (fromIntegral n)
+
+jumpIf :: (Integer -> Bool) -> Forth ()
+jumpIf test = do
+  addr <- getArg :: Forth Integer
+  cond <- getStack
+  case cond of
+    SInteger i -> if test i
+                    then branch (fromIntegral addr)
+                    else step
+    _ -> fail $ "Condition value is " ++ showType cond ++ ", not Integer!"
+
+getMark :: Marks -> String -> Forth ()
+getMark marks name = do
+  case M.lookup name marks of
+    Just x -> pushS (SInteger $ fromIntegral x)
+    Nothing -> fail $ "Undefined mark: " ++ name

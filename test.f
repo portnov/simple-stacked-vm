@@ -1,9 +1,9 @@
-: x VARIABLE
-: y VARIABLE
+: n VARIABLE
+: i VARIABLE
 : CR "\n" . ;
 
-INPUT x !
-8 y !
+INPUT n !
+0 i !
 
 5 x @ CMP
 @gt5 JGE
@@ -12,7 +12,6 @@ x @ y @ + . CR
 @end GOTO
 
 .gt5
-x @ y @ * . CR
+x @ y @ - . CR
 
 .end
-NOP

@@ -115,8 +115,8 @@ liftF fn = do
 
 liftF2 :: (StackType a) => (a -> a -> a) -> Forth ()
 liftF2 op = do
-  x <- getArg
   y <- getArg
+  x <- getArg
   let result = x `op` y
   push result
 
@@ -143,8 +143,8 @@ remF = liftF2 (mod :: Integer -> Integer -> Integer)
 
 cmpF :: Forth ()
 cmpF = do
-    x <- getStack
     y <- getStack
+    x <- getStack
     case (x,y) of
       (SInteger a, SInteger b) -> push (cmp a b)
       (SString a, SString b) -> push (cmp a b)

@@ -1,17 +1,27 @@
+: CR "\n" . ;
+: INC DUP @ 1 + SWAP ! ;
+: ODD 2 REM ;
+: ? @ . ;
+
 : n VARIABLE
 : i VARIABLE
-: CR "\n" . ;
 
+"Enter number:\n" .
 INPUT n !
+
 0 i !
+.loop
+"Hello." . CR
+i @ ODD
+@even JZ
+i ? " is odd." . CR
+@endloop GOTO
+.even
+i ? " is even." . CR
+.endloop
+i INC
+i @ n @ CMP
+@loop JLT
 
-5 x @ CMP
-@gt5 JGE
+"End" . CR
 
-x @ y @ + . CR
-@end GOTO
-
-.gt5
-x @ y @ - . CR
-
-.end

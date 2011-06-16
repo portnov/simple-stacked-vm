@@ -9,7 +9,11 @@ import Language.SimpleForth.Types
 import Language.SimpleForth.Operations
 
 interpret :: Code -> Forth ()
-interpret (Code marks code) = interpretWith (interpretOne marks) code
+interpret c@(Code marks code) = do
+  t <- gets vmTraceMode
+  if t
+    then traceStack c
+    else interpretWith (interpretOne marks) code
 
 interpretWith :: (StackItem -> Forth ()) -> Stack -> Forth ()
 interpretWith go code = do
@@ -29,7 +33,10 @@ printItem i = do
 
 traceStack :: Code -> Forth ()
 traceStack (Code marks code) = do
-    lift $ print $ "Trace: " ++ show code
+    lift $ putStrLn $ "Trace marks: " ++ show marks
+    lift $ putStrLn $ "Trace code: " ++ show code
+    lift $ putStr "Trace stack: "
+    printStack
     interpretWith traceOne code
   where
     traceOne i = do
@@ -40,6 +47,9 @@ traceStack (Code marks code) = do
 
 runForth :: Forth () -> IO ()
 runForth forth = evalStateT forth emptyVMState
+
+runForth' :: VMState -> Forth () -> IO ()
+runForth' st forth = evalStateT forth st
 
 interpretOne :: Marks -> StackItem -> Forth ()
 interpretOne _ (SInteger x) = push x >> step
@@ -75,7 +85,10 @@ eval _ ABS      = absF >> step
 eval _ CMP      = cmpF >> step
 eval _ DEFINE   = define >> step
 eval _ COLON    = push COLON >> step
-eval _ (CALL s) = (interpretLocal =<< recall s) >> step
+eval m (CALL s) = do
+                  code <- recall s
+                  interpretLocal $ code {cMarks = m}
+                  step
 eval _ VARIABLE = variable >> step
 eval _ ASSIGN   = assign >> step
 eval _ READ     = readVar >> step

@@ -133,7 +133,8 @@ data VMState = VMState {
   vmDefinitions :: M.Map String [StackItem],
   vmVariables :: M.Map Int StackItem,
   vmNextVariable :: Int,
-  vmPC :: Int
+  vmPC :: Int,
+  vmTraceMode :: Bool
   }
   deriving (Eq, Show)
 
@@ -144,7 +145,8 @@ emptyVMState = VMState {
   vmDefinitions = M.empty,
   vmVariables = M.empty,
   vmNextVariable = 0,
-  vmPC = 0 }
+  vmPC = 0,
+  vmTraceMode = False }
 
 type Forth a = StateT VMState IO a
 

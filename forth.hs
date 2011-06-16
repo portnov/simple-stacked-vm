@@ -16,6 +16,7 @@ data Flag =
 
 data Mode =
     Interpret
+  | Trace
   | Compile
   | Run
   | Decompile
@@ -37,7 +38,8 @@ options = [
   Option "c" ["compile"]   (NoArg $ Mode Compile)   "compile source code to bytecode",
   Option "i" ["interpret"] (NoArg $ Mode Interpret) "interpret source code",
   Option "e" ["run"]       (NoArg $ Mode Run)       "run compiled bytecode",
-  Option "d" ["decompile"] (NoArg $ Mode Decompile) "decompile bytecode into source code",
+  Option "d" ["decompile"] (NoArg $ Mode Decompile) "decompile bytecode into pseudo source code",
+  Option "t" ["trace"]     (NoArg $ Mode Trace)     "interpret and trace source code ",
   Option "o" ["output"]    (ReqArg Output "FILE")   "set output file name" ]
 
 usage :: String
@@ -65,6 +67,13 @@ doInterpret path = do
   case mbCode of
     Left err -> fail (show err)
     Right code -> runForth (interpret code)
+
+doTrace :: FilePath -> IO ()
+doTrace path = do
+  mbCode <- parseForthFile path
+  case mbCode of
+    Left err -> fail (show err)
+    Right code -> runForth' (emptyVMState {vmTraceMode = True}) (interpret code)
 
 doCompile :: FilePath -> Maybe FilePath -> IO ()
 doCompile src mbdst = do
@@ -96,4 +105,5 @@ main = do
         Compile   -> doCompile (inputFile m) (outputFile m)
         Run       -> doRun (inputFile m)
         Decompile -> doDecompile (inputFile m) 
+        Trace     -> doTrace (inputFile m) 
 

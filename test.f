@@ -3,6 +3,17 @@
 : ODD 2 REM ;
 : ? @ . ;
 
+: PRINT_ODD
+  DUP @ ODD
+  @even JZ
+  ? " is odd." .
+  @endprint GOTO
+  .even
+  ? " is even." .
+  .endprint
+  CR
+  ;
+
 : n VARIABLE
 : i VARIABLE
 
@@ -12,13 +23,7 @@ INPUT n !
 0 i !
 .loop
 "Hello." . CR
-i @ ODD
-@even JZ
-i ? " is odd." . CR
-@endloop GOTO
-.even
-i ? " is even." . CR
-.endloop
+i PRINT_ODD
 i INC
 i @ n @ CMP
 @loop JLT

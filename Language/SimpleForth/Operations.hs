@@ -3,6 +3,7 @@ module Language.SimpleForth.Operations where
 
 import Data.Data
 import qualified Data.Map as M
+import Data.Array
 import Control.Monad.State
 
 import Language.SimpleForth.Types
@@ -157,4 +158,28 @@ recall name = do
   case M.lookup name dict of
     Nothing -> fail $ "Unknown word: " ++ name
     Just list -> return (reverse list)
+
+variable :: Forth ()
+variable = do
+  name <- getArg
+  st <- get
+  let n = vmNextVariable st
+      dict = M.insert name [SInteger $ fromIntegral n] (vmDefinitions st)
+  put $ st {vmDefinitions = dict, vmNextVariable = n+1}
+
+assign :: Forth ()
+assign = do
+  n <- getArg :: Forth Integer
+  value <- getStack
+  st <- get
+  let vars = M.insert (fromIntegral n) value (vmVariables st)
+  put $ st {vmVariables = vars}
+
+readVar :: Forth ()
+readVar = do
+  n <- getArg :: Forth Integer
+  vars <- gets vmVariables
+  case M.lookup (fromIntegral n) vars of
+    Nothing -> fail $ "Trying to read variable before assignment: #" ++ show n
+    Just value -> pushS value
 

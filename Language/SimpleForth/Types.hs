@@ -65,6 +65,9 @@ data Instruction =
   | DEFINE
   | COLON
   | CALL String
+  | VARIABLE
+  | ASSIGN
+  | READ
   deriving (Eq, Data, Typeable)
 
 instance Show Instruction where
@@ -86,11 +89,16 @@ instance Show Instruction where
   show DEFINE   = ";"
   show COLON    = ":"
   show (CALL s) = "<CALL " ++ s ++ ">"
+  show VARIABLE = "VARIABLE"
+  show ASSIGN   = "!"
+  show READ     = "@"
 
 data VMState = VMState {
   vmStack :: Stack,
   vmCurrentDefinition :: Stack,
-  vmDefinitions :: M.Map String [StackItem]
+  vmDefinitions :: M.Map String [StackItem],
+  vmVariables :: M.Map Int StackItem,
+  vmNextVariable :: Int
   }
   deriving (Eq, Show)
 
@@ -98,7 +106,9 @@ emptyVMState :: VMState
 emptyVMState = VMState {
   vmStack = [],
   vmCurrentDefinition = [],
-  vmDefinitions = M.empty }
+  vmDefinitions = M.empty,
+  vmVariables = M.empty,
+  vmNextVariable = 0 }
 
 type Forth a = StateT VMState IO a
 

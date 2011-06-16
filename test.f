@@ -1,11 +1,7 @@
-: SQR DUP * ;
-: FOURTH SQR SQR ;
-: NEWLINE "\n" . ;
-: TWO 2 ;
+: x VARIABLE
+: y VARIABLE
 
-TWO SQR .
-NEWLINE
-3 FOURTH .
-NEWLINE
-"Hello" .
-NEWLINE
+5 x !
+8 y !
+
+x @ y @ + .

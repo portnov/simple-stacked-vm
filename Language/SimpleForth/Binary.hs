@@ -35,6 +35,9 @@ instance Binary Instruction where
   put DEFINE   = byte 15
   put COLON    = byte 16
   put (CALL s) = byte 17 >> put s
+  put VARIABLE = byte 18
+  put ASSIGN   = byte 19
+  put READ     = byte 20
 
   get = do
     c <- getWord8
@@ -57,6 +60,9 @@ instance Binary Instruction where
       15 -> return DEFINE
       16 -> return COLON
       17 -> CALL <$> get
+      18 -> return VARIABLE
+      19 -> return ASSIGN
+      20 -> return READ
       _ -> fail $ "Unknown opcode: " ++ show c
 
 instance Binary StackItem where

@@ -46,3 +46,7 @@ eval ABS      = absF
 eval DEFINE   = define
 eval COLON    = push COLON
 eval (CALL s) = interpret =<< recall s
+eval VARIABLE = variable
+eval ASSIGN   = assign
+eval READ     = readVar
+

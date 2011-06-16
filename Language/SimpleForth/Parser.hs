@@ -69,6 +69,9 @@ pWord = do
     "ABS" ->  instr ABS
     ";" ->    putState (PState False False) >> return [SInstruction DEFINE]
     ":" ->    putState (PState True True) >> return []
+    "VARIABLE" -> putState (PState False False) >> return [SInstruction VARIABLE]
+    "!" ->    instr ASSIGN
+    "@" ->    instr READ
     _ -> do
          st <- getState
          if newWord st

@@ -72,6 +72,7 @@ pWord = do
     "VARIABLE" -> putState (PState False False) >> return [SInstruction VARIABLE]
     "!" ->    instr ASSIGN
     "@" ->    instr READ
+    "INPUT" -> instr INPUT
     _ -> do
          st <- getState
          if newWord st

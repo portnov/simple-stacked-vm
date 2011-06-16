@@ -68,6 +68,7 @@ data Instruction =
   | VARIABLE
   | ASSIGN
   | READ
+  | INPUT
   deriving (Eq, Data, Typeable)
 
 instance Show Instruction where
@@ -92,6 +93,7 @@ instance Show Instruction where
   show VARIABLE = "VARIABLE"
   show ASSIGN   = "!"
   show READ     = "@"
+  show INPUT    = "INPUT"
 
 data VMState = VMState {
   vmStack :: Stack,

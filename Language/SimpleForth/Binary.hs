@@ -38,6 +38,7 @@ instance Binary Instruction where
   put VARIABLE = byte 18
   put ASSIGN   = byte 19
   put READ     = byte 20
+  put INPUT    = byte 21
 
   get = do
     c <- getWord8
@@ -63,6 +64,7 @@ instance Binary Instruction where
       18 -> return VARIABLE
       19 -> return ASSIGN
       20 -> return READ
+      21 -> return INPUT
       _ -> fail $ "Unknown opcode: " ++ show c
 
 instance Binary StackItem where

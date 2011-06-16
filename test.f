@@ -1,7 +1,7 @@
 : x VARIABLE
 : y VARIABLE
 
-5 x !
+INPUT x !
 8 y !
 
 x @ y @ + .

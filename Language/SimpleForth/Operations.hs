@@ -2,6 +2,7 @@
 module Language.SimpleForth.Operations where
 
 import Data.Data
+import Data.Char
 import qualified Data.Map as M
 import Data.Array
 import Control.Monad.State
@@ -182,4 +183,11 @@ readVar = do
   case M.lookup (fromIntegral n) vars of
     Nothing -> fail $ "Trying to read variable before assignment: #" ++ show n
     Just value -> pushS value
+
+input :: Forth ()
+input = do
+  str <- lift getLine
+  if all isDigit str
+    then pushS (SInteger $ read str)
+    else pushS (SString str)
 

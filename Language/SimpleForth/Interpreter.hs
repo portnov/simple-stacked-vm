@@ -49,4 +49,5 @@ eval (CALL s) = interpret =<< recall s
 eval VARIABLE = variable
 eval ASSIGN   = assign
 eval READ     = readVar
+eval INPUT    = input
 

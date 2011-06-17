@@ -127,10 +127,13 @@ instance Show Instruction where
   show JGE      = "JGE"
   show JLE      = "JLE"
 
+data Definition = Definition Int Stack
+  deriving (Eq, Show)
+
 data VMState = VMState {
   vmStack :: Stack,
   vmCurrentDefinition :: Stack,
-  vmDefinitions :: M.Map String [StackItem],
+  vmDefinitions :: M.Map String Definition,
   vmVariables :: M.Map Int StackItem,
   vmNextVariable :: Int,
   vmPC :: Int,

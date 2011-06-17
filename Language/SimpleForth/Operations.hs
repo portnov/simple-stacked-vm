@@ -169,23 +169,26 @@ define = do
       SString name -> do
         st <- get
         dict <- gets vmDefinitions
-        let dict' = M.insert name ws dict
+        pc <- gets vmPC
+        let start = pc - length ws
+            dict' = M.insert name (Definition start $ reverse ws) dict
         put $ st {vmDefinitions = dict'}
       x -> fail $ "New word name is " ++ showType x ++ ", not String!"
 
-recall :: String -> Forth Code
+recall :: String -> Forth Definition
 recall name = do
   dict <- gets vmDefinitions
   case M.lookup name dict of
     Nothing -> fail $ "Unknown word: " ++ name
-    Just list -> return $ Code M.empty (reverse list)
+    Just list -> return list
 
 variable :: Forth ()
 variable = do
   name <- getArg
   st <- get
+  pc <- gets vmPC
   let n = vmNextVariable st
-      dict = M.insert name [SInteger $ fromIntegral n] (vmDefinitions st)
+      dict = M.insert name (Definition (pc-1) [SInteger $ fromIntegral n]) (vmDefinitions st)
   put $ st {vmDefinitions = dict, vmNextVariable = n+1}
 
 assign :: Forth ()

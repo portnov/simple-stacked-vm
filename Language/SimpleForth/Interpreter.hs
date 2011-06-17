@@ -66,6 +66,11 @@ interpretLocal code = do
   st <- get
   put $ st {vmPC = oldPC}
 
+shiftMarks :: Int -> Marks -> Marks
+shiftMarks k = M.map shift
+  where
+    shift n = n-k
+
 eval :: Marks -> Instruction -> Forth ()
 eval _ NOP      = step
 eval _ (PUSH x) = pushS x >> step
@@ -86,8 +91,8 @@ eval _ CMP      = cmpF >> step
 eval _ DEFINE   = define >> step
 eval _ COLON    = push COLON >> step
 eval m (CALL s) = do
-                  code <- recall s
-                  interpretLocal $ code {cMarks = m}
+                  (Definition pc code) <- recall s
+                  interpretLocal $ Code (shiftMarks pc m) code
                   step
 eval _ VARIABLE = variable >> step
 eval _ ASSIGN   = assign >> step

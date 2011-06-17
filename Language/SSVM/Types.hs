@@ -11,10 +11,16 @@ data StackItem =
   | SString String
   | SInstruction Instruction
   | Quote StackItem
-  deriving (Eq, Show, Data, Typeable)
+  deriving (Eq, Data, Typeable)
 
 showType :: StackItem -> String
 showType x = show (toConstr x)
+
+instance Show StackItem where
+  show (SInteger x) = show x
+  show (SString s)  = show s
+  show (SInstruction i) = show i
+  show (Quote x) = "'" ++ show x
 
 showItem :: StackItem -> String
 showItem (SInteger x) = show x

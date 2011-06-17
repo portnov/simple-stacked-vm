@@ -1,21 +1,21 @@
 
-module Language.SimpleForth.Interpreter where
+module Language.SSVM.Interpreter where
 
 import Control.Monad
 import Control.Monad.State
 import qualified Data.Map as M
 
-import Language.SimpleForth.Types
-import Language.SimpleForth.Operations
+import Language.SSVM.Types
+import Language.SSVM.Operations
 
-interpret :: Code -> Forth ()
+interpret :: Code -> VM ()
 interpret c@(Code marks code) = do
   t <- gets vmTraceMode
   if t
     then traceStack c
     else interpretWith (interpretOne marks) code
 
-interpretWith :: (StackItem -> Forth ()) -> Stack -> Forth ()
+interpretWith :: (StackItem -> VM ()) -> Stack -> VM ()
 interpretWith go code = do
   pc <- gets vmPC
   if pc >= length code
@@ -24,14 +24,14 @@ interpretWith go code = do
          go (code !! pc)
          interpretWith go code
 
-printItem :: StackItem -> Forth()
+printItem :: StackItem -> VM()
 printItem i = do
   pc <- gets vmPC
   lift $ putStr $ show pc
   lift $ putStr ".>>\t"
   lift $ putStrLn $ showItem i
 
-traceStack :: Code -> Forth ()
+traceStack :: Code -> VM ()
 traceStack (Code marks code) = do
     lift $ putStrLn $ "Trace marks: " ++ show marks
     lift $ putStrLn $ "Trace code: " ++ show code
@@ -45,19 +45,19 @@ traceStack (Code marks code) = do
       printStack
       printCurrentDef
 
-runForth :: Forth () -> IO ()
-runForth forth = evalStateT forth emptyVMState
+runVM :: VM () -> IO ()
+runVM forth = evalStateT forth emptyVMState
 
-runForth' :: VMState -> Forth () -> IO ()
-runForth' st forth = evalStateT forth st
+runVM' :: VMState -> VM () -> IO ()
+runVM' st forth = evalStateT forth st
 
-interpretOne :: Marks -> StackItem -> Forth ()
+interpretOne :: Marks -> StackItem -> VM ()
 interpretOne _ (SInteger x) = push x >> step
 interpretOne _ (SString x)  = push x >> step
 interpretOne m (SInstruction x) = eval m x
 interpretOne _ (Quote x) = pushD x >> step
 
-interpretLocal :: Code -> Forth ()
+interpretLocal :: Code -> VM ()
 interpretLocal code = do
   st <- get
   let oldPC = vmPC st
@@ -71,7 +71,7 @@ shiftMarks k = M.map shift
   where
     shift n = n-k
 
-eval :: Marks -> Instruction -> Forth ()
+eval :: Marks -> Instruction -> VM ()
 eval _ NOP      = step
 eval _ (PUSH x) = pushS x >> step
 eval _ DROP     = pop >> step

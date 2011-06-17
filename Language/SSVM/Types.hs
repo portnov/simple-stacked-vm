@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable, TypeSynonymInstances #-}
-module Language.SimpleForth.Types where
+module Language.SSVM.Types where
 
 import Control.Monad
 import Control.Monad.State
@@ -151,5 +151,5 @@ emptyVMState = VMState {
   vmPC = 0,
   vmTraceMode = False }
 
-type Forth a = StateT VMState IO a
+type VM a = StateT VMState IO a
 

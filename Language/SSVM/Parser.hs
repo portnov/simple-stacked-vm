@@ -1,5 +1,5 @@
 
-module Language.SimpleForth.Parser where
+module Language.SSVM.Parser where
 
 import Control.Applicative hiding ((<|>))
 import Data.Monoid
@@ -8,7 +8,7 @@ import Text.Parsec
 import Text.Parsec.Token
 import Text.Parsec.Language
 
-import Language.SimpleForth.Types
+import Language.SSVM.Types
 
 import Debug.Trace
 
@@ -134,8 +134,8 @@ pSpaces = do
   many1 (oneOf " \t\r\n")
   code []
 
-pForth :: TParser Code
-pForth = do
+pSource :: TParser Code
+pSource = do
     ws <- many1 anyWord
     return (mconcat ws)
   where
@@ -144,11 +144,11 @@ pForth = do
       step (length $ cCode word)
       return word
 
-parseForth :: FilePath -> String -> Either ParseError Code
-parseForth name str = runParser pForth emptyState name str
+parseVM :: FilePath -> String -> Either ParseError Code
+parseVM name str = runParser pSource emptyState name str
 
-parseForthFile :: FilePath -> IO (Either ParseError Code)
-parseForthFile path = do
+parseSourceFile :: FilePath -> IO (Either ParseError Code)
+parseSourceFile path = do
   str <- readFile path
-  return $ runParser pForth emptyState path str
+  return $ runParser pSource emptyState path str
 

@@ -4,10 +4,10 @@ import System.Console.GetOpt
 import System.FilePath
 import Data.Binary
 
-import Language.SimpleForth.Types
-import Language.SimpleForth.Parser
-import Language.SimpleForth.Interpreter
-import Language.SimpleForth.Binary
+import Language.SSVM.Types
+import Language.SSVM.Parser
+import Language.SSVM.Interpreter
+import Language.SSVM.Binary
 
 data Flag =
     Mode Mode
@@ -63,24 +63,24 @@ parseCmdLine args =
 
 doInterpret :: FilePath -> IO ()
 doInterpret path = do
-  mbCode <- parseForthFile path
+  mbCode <- parseSourceFile path
   case mbCode of
     Left err -> fail (show err)
-    Right code -> runForth (interpret code)
+    Right code -> runVM (interpret code)
 
 doTrace :: FilePath -> IO ()
 doTrace path = do
-  mbCode <- parseForthFile path
+  mbCode <- parseSourceFile path
   case mbCode of
     Left err -> fail (show err)
-    Right code -> runForth' (emptyVMState {vmTraceMode = True}) (interpret code)
+    Right code -> runVM' (emptyVMState {vmTraceMode = True}) (interpret code)
 
 doCompile :: FilePath -> Maybe FilePath -> IO ()
 doCompile src mbdst = do
   let dst = case mbdst of
               Just x -> x
               Nothing -> replaceExtension src ".bytecode"
-  mbCode <- parseForthFile src
+  mbCode <- parseSourceFile src
   case mbCode of
     Left err -> fail (show err)
     Right code -> encodeFile dst code
@@ -88,7 +88,7 @@ doCompile src mbdst = do
 doRun :: FilePath -> IO ()
 doRun path = do
   code <- decodeFile path
-  runForth (interpret code)
+  runVM (interpret code)
 
 doDecompile :: FilePath -> IO ()
 doDecompile path = do

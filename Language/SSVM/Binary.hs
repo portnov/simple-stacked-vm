@@ -1,11 +1,11 @@
 
-module Language.SimpleForth.Binary where
+module Language.SSVM.Binary where
 
 import Control.Applicative
 import Data.Binary
 import Data.Char
 
-import Language.SimpleForth.Types
+import Language.SSVM.Types
 
 byte :: Word8 -> Put
 byte x = putWord8 x

@@ -92,7 +92,7 @@ pWord = do
     "ABS" ->  instr ABS
     "CMP" ->  instr CMP
     ";" ->    endDefinition >> code [SInstruction DEFINE]
-    ":" ->    startDefinition >> code []
+    ":" ->    startDefinition >> code [SInstruction COLON]
     "VARIABLE" -> endDefinition >> code [SInstruction VARIABLE]
     "!" ->    instr ASSIGN
     "@" ->    instr READ

@@ -26,6 +26,11 @@ type Stack = [StackItem]
 
 type Marks = M.Map String Int
 
+showMarks :: Marks -> String
+showMarks ms = unlines $ map s $ M.assocs ms
+  where
+    s (k,v) = "\t" ++ k ++ ": " ++ show v
+
 data Code = Code {
   cMarks :: Marks,
   cCode :: [StackItem] }

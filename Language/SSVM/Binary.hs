@@ -1,22 +1,76 @@
-
+{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
 module Language.SSVM.Binary where
 
 import Control.Applicative
-import Data.Binary
+import Control.Monad (forM_)
+import qualified Control.Monad.State as S
+import Data.BinaryState
+import qualified Data.Map as M
 import Data.Char
+import Data.Word
 
 import Language.SSVM.Types
 
-byte :: Word8 -> Put
-byte x = putWord8 x
+data BState = BState {
+  bMarks :: Marks,
+  bWords :: M.Map String Int,
+  bLastWord :: Int,
+  bAfterColon :: Bool }
+  deriving (Eq, Show)
 
-char :: Char -> Put
-char c = putWord8 (fromIntegral $ ord c)
+emptyBState :: BState
+emptyBState = BState {
+  bMarks = M.empty,
+  bWords = M.empty,
+  bLastWord = 0,
+  bAfterColon = False }
+
+type Put a = PutState BState a
+type Get a = GetState BState a
+
+allocWord :: String -> Put Int
+allocWord w = do
+  st <- S.get
+  let next = 1 + bLastWord st
+      ws = M.insert w next (bWords st)
+  S.put $ st {bWords = ws, bLastWord = next}
+  return next
+
+getWordN :: String -> Put Int
+getWordN w = do
+  ws <- S.gets bWords
+  case M.lookup w ws of
+    Nothing -> fail $ "Undefined word: " ++ w
+    Just i -> return i
+
+byte :: Word8 -> Put ()
+byte x = putZ x
+
+char :: Char -> Put ()
+char c = putZ (fromIntegral (ord c) :: Word8)
 
 getChar8 :: Get Char
-getChar8 = (chr . fromIntegral) <$> getWord8
+getChar8 = (chr . fromIntegral) <$> (getZ :: Get Word8)
 
-instance Binary Instruction where
+getMark :: String -> Put Int
+getMark name = do
+  ms <- S.gets bMarks
+  case M.lookup name ms of
+    Nothing -> fail $ "Undefined mark: @" ++ name
+    Just n  -> return n
+
+wordName :: Int -> Get String
+wordName n = return $ "WORD_" ++ show n
+
+markName :: Int -> Get String
+markName n = do
+  let name = "mark_at_" ++ show n
+  st <- S.get
+  let ms = M.insert name n (bMarks st)
+  S.put $ st {bMarks = ms}
+  return name
+
+instance BinaryState BState Instruction where
   put NOP      = byte 0
   put (PUSH x) = byte 1 >> put x
   put DROP     = byte 2
@@ -34,14 +88,23 @@ instance Binary Instruction where
   put ABS      = byte 14
   put CMP      = byte 15
   put DEFINE   = byte 16
-  put COLON    = byte 17
-  put (CALL s) = byte 18 >> put s
+  put COLON    = do
+                 st <- S.get
+                 S.put $ st {bAfterColon = True}
+                 byte 17
+  put (CALL s) = do
+                 n <- getWordN s
+                 byte 18
+                 putZ n
   put VARIABLE = byte 19
   put ASSIGN   = byte 20
   put READ     = byte 21
   put INPUT    = byte 22
   put MARK     = byte 23
-  put (GETMARK x) = byte 24 >> put x
+  put (GETMARK x) = do
+                    n <- getMark x
+                    byte 24
+                    putZ n
   put GOTO     = byte 25
   put JZ       = byte 26
   put JNZ      = byte 27
@@ -51,7 +114,7 @@ instance Binary Instruction where
   put JLE      = byte 31
 
   get = do
-    c <- getWord8
+    c <- getZ :: Get Word8
     case c of
       0 -> return NOP
       1 -> PUSH <$> get
@@ -71,13 +134,13 @@ instance Binary Instruction where
       15 -> return CMP
       16 -> return DEFINE
       17 -> return COLON
-      18 -> CALL <$> get
+      18 -> CALL <$> (wordName =<< getZ)
       19 -> return VARIABLE
       20 -> return ASSIGN
       21 -> return READ
       22 -> return INPUT
       23 -> return MARK
-      24 -> GETMARK <$> get
+      24 -> GETMARK <$> (markName =<< getZ)
       25 -> return GOTO
       26 -> return JZ
       27 -> return JNZ
@@ -87,22 +150,49 @@ instance Binary Instruction where
       31 -> return JLE
       _ -> fail $ "Unknown opcode: " ++ show c
 
-instance Binary StackItem where
-  put (SInteger x)     = put 'I' >> put x
-  put (SString x)      = put 'S' >> put x
-  put (SInstruction x) = put 'O' >> put x
-  put (Quote x)        = put 'Q' >> put x
+instance BinaryState BState StackItem where
+  put (SInteger x)     = putZ 'I' >> putZ x
+  put (SString x)      = do
+                         a <- S.gets bAfterColon
+                         if a
+                           then do
+                                st <- S.get
+                                S.put $ st {bAfterColon = False}
+                                putZ 'W'
+                                w <- allocWord x
+                                putZ w
+                            else putZ 'S' >> putZ x
+  put (SInstruction x) = putZ 'O' >> put x
+  put (Quote x)        = putZ 'Q' >> put x
 
   get = do
     c <- getChar8
     case c of
-      'I' -> SInteger <$> get
-      'S' -> SString <$> get
+      'I' -> SInteger <$> getZ
+      'S' -> SString <$> getZ
       'O' -> SInstruction <$> get
       'Q' -> Quote <$> get
+      'W' -> SString <$> (wordName =<< getZ)
 
-instance Binary Code where
-  put (Code marks code) = put marks >> put code
+instance BinaryState BState [StackItem] where
+  put list = forM_ list put
 
-  get = Code <$> get <*> get
+  get = getUntilEOF
+    where
+      getUntilEOF = do
+        b <- isEmpty
+        if b
+          then return []
+          else do
+               x <- get
+               next <- getUntilEOF
+               return (x:next)
+
+dumpCode :: FilePath -> Code -> IO ()
+dumpCode path (Code marks code) = encodeFile path (emptyBState {bMarks = marks}) code
+
+loadCode :: FilePath -> IO Code
+loadCode path = do
+  (code, st) <- decodeFile' path emptyBState
+  return $ Code (bMarks st) code
 

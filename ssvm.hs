@@ -2,7 +2,6 @@
 import System.Environment
 import System.Console.GetOpt
 import System.FilePath
-import Data.Binary
 
 import Language.SSVM.Types
 import Language.SSVM.Parser
@@ -83,16 +82,17 @@ doCompile src mbdst = do
   mbCode <- parseSourceFile src
   case mbCode of
     Left err -> fail (show err)
-    Right code -> encodeFile dst code
+    Right code -> dumpCode dst code
 
 doRun :: FilePath -> IO ()
 doRun path = do
-  code <- decodeFile path
+  code <- loadCode path
   runVM (interpret code)
 
 doDecompile :: FilePath -> IO ()
 doDecompile path = do
-  code <- decodeFile path
+  Code marks code <- loadCode path
+  putStrLn $ showMarks marks
   putStrLn $ unwords $ map showItem code
 
 main = do

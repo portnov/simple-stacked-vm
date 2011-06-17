@@ -1,7 +1,6 @@
 
 module Language.SSVM.Interpreter where
 
-import Control.Monad
 import Control.Monad.State
 import qualified Data.Map as M
 

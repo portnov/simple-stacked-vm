@@ -1,7 +1,6 @@
 {-# LANGUAGE DeriveDataTypeable, TypeSynonymInstances #-}
 module Language.SSVM.Types where
 
-import Control.Monad
 import Control.Monad.State
 import Data.Data
 import Data.Monoid
@@ -112,13 +111,13 @@ instance Show Instruction where
   show CMP      = "CMP"
   show DEFINE   = ";"
   show COLON    = ":"
-  show (CALL s) = "<CALL " ++ s ++ ">"
+  show (CALL s) = s
   show VARIABLE = "VARIABLE"
   show ASSIGN   = "!"
   show READ     = "@"
   show INPUT    = "INPUT"
   show MARK     = "MARK"
-  show (GETMARK x) = "<GETMARK " ++ x ++ ">"
+  show (GETMARK x) = "@" ++ x
   show GOTO     = "GOTO"
   show JZ       = "JZ"
   show JNZ      = "JNZ"

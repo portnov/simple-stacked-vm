@@ -4,7 +4,6 @@ module Language.SSVM.Operations where
 import Data.Data
 import Data.Char
 import qualified Data.Map as M
-import Data.Array
 import Control.Monad.State
 
 import Language.SSVM.Types

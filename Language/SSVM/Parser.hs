@@ -10,8 +10,6 @@ import Text.Parsec.Language
 
 import Language.SSVM.Types
 
-import Debug.Trace
-
 baseLanguage = haskell
 
 data ParserState = PState {

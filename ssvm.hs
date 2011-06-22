@@ -21,6 +21,7 @@ data Mode =
   | Compile
   | Run
   | Decompile
+  | Help
   deriving (Eq, Show)
 
 data RunMode = RunMode {
@@ -41,12 +42,13 @@ options = [
   Option "e" ["run"]       (NoArg $ Mode Run)       "run compiled bytecode",
   Option "d" ["decompile"] (NoArg $ Mode Decompile) "decompile bytecode into pseudo source code",
   Option "t" ["trace"]     (NoArg $ Mode Trace)     "interpret and trace source code ",
-  Option "o" ["output"]    (ReqArg Output "FILE")   "set output file name" ]
+  Option "o" ["output"]    (ReqArg Output "FILE")   "set output file name",
+  Option "h" ["help"]      (NoArg $ Mode Help)      "show this help and exit" ]
 
 usage :: String
 usage = usageInfo header options
   where
-    header = "Usage: forth [-e|-c|-i] [-o OUTPUT] FILE"
+    header = "Usage: ssvm [MODE] [-o OUTPUT] FILE"
 
 flags2runmode :: [Flag] -> RunMode
 flags2runmode flags = foldl go defaultMode flags
@@ -57,9 +59,10 @@ flags2runmode flags = foldl go defaultMode flags
 parseCmdLine :: [String] -> Either String RunMode
 parseCmdLine args =
   case getOpt Permute options args of
-    (_, [], [])         -> Left "No input file"
+    (flags, [], []) | Mode Help `elem` flags -> Right (flags2runmode flags)
+                    | otherwise              -> Left "No input file"
     (flags, [file], []) -> Right $ (flags2runmode flags) {inputFile = file}
-    (_, (_:_:_), [])    -> Left "Too many input files"
+    (_, (_:_:_), [])    -> Left "More than one input file"
     (_, _, errs)        -> Left $ unlines errs ++ usage
 
 doInterpret :: FilePath -> IO ()
@@ -111,4 +114,5 @@ main = do
         Run       -> doRun (inputFile m)
         Decompile -> doDecompile (inputFile m) 
         Trace     -> doTrace (inputFile m) 
+        Help      -> putStrLn usage
 

@@ -17,7 +17,7 @@
 : n VARIABLE
 : i VARIABLE
 
-"Enter number:\n" .
+"Enter number: " .
 INPUT n !
 
 0 i !

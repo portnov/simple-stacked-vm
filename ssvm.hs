@@ -1,7 +1,9 @@
 
+import Control.Monad (when)
 import System.Environment
 import System.Console.GetOpt
 import System.FilePath
+import System.IO
 
 import Language.SSVM.Types
 import Language.SSVM.Parser
@@ -100,6 +102,9 @@ main = do
   case parseCmdLine args of
     Left err -> error err
     Right m -> do
+      term <- hIsTerminalDevice stdout
+      when term $
+        hSetBuffering stdout NoBuffering
       case mode m of
         Interpret -> doInterpret (inputFile m)
         Compile   -> doCompile (inputFile m) (outputFile m)

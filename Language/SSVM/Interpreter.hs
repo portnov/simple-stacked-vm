@@ -50,6 +50,9 @@ runVM forth = evalStateT forth emptyVMState
 runVM' :: VMState -> VM () -> IO ()
 runVM' st forth = evalStateT forth st
 
+traceVM :: VM () -> IO ()
+traceVM code = runVM' (emptyVMState {vmTraceMode = True}) code
+
 interpretOne :: Marks -> StackItem -> VM ()
 interpretOne _ (SInteger x) = push x >> step
 interpretOne _ (SString x)  = push x >> step

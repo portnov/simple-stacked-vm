@@ -74,7 +74,7 @@ doTrace path = do
   mbCode <- parseSourceFile path
   case mbCode of
     Left err -> fail (show err)
-    Right code -> runVM' (emptyVMState {vmTraceMode = True}) (interpret code)
+    Right code -> traceVM (interpret code)
 
 doCompile :: FilePath -> Maybe FilePath -> IO ()
 doCompile src mbdst = do

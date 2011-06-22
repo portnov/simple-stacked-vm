@@ -4,3 +4,4 @@
 .*.swp
 *.bytecode
 ssvm
+dist/

@@ -18,6 +18,7 @@ data Flag =
 data Mode =
     Interpret
   | Trace
+  | TraceBytecode
   | Compile
   | Run
   | Decompile
@@ -42,6 +43,7 @@ options = [
   Option "e" ["run"]       (NoArg $ Mode Run)       "run compiled bytecode",
   Option "d" ["decompile"] (NoArg $ Mode Decompile) "decompile bytecode into pseudo source code",
   Option "t" ["trace"]     (NoArg $ Mode Trace)     "interpret and trace source code ",
+  Option ""  ["trace-bytecode"] (NoArg $ Mode TraceBytecode)     "run and trace bytecode ",
   Option "o" ["output"]    (ReqArg Output "FILE")   "set output file name",
   Option "h" ["help"]      (NoArg $ Mode Help)      "show this help and exit" ]
 
@@ -79,6 +81,11 @@ doTrace path = do
     Left err -> fail (show err)
     Right code -> traceVM (interpret code)
 
+doTraceBytecode :: FilePath -> IO ()
+doTraceBytecode path = do
+  code <- loadCode path
+  traceVM (interpret code)
+
 doCompile :: FilePath -> Maybe FilePath -> IO ()
 doCompile src mbdst = do
   let dst = case mbdst of
@@ -114,5 +121,6 @@ main = do
         Run       -> doRun (inputFile m)
         Decompile -> doDecompile (inputFile m) 
         Trace     -> doTrace (inputFile m) 
+        TraceBytecode -> doTraceBytecode (inputFile m) 
         Help      -> putStrLn usage
 

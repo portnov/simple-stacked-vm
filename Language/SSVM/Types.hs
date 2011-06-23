@@ -38,13 +38,16 @@ showMarks ms = unlines $ map s $ M.assocs ms
     s (k,v) = "\t" ++ k ++ ": " ++ show v
 
 data Code = Code {
-  cMarks :: Marks,
+  cMarks :: [Marks],
   cCode :: [StackItem] }
   deriving (Eq, Show, Data, Typeable)
 
 instance Monoid Code where
-  mempty = Code M.empty []
-  mappend (Code m1 c1) (Code m2 c2) = Code (M.union m1 m2) (c1 ++ c2)
+  mempty = Code [M.empty] []
+  mappend (Code l1 c1) (Code l2 c2) = Code (M.union m1 m2: ms) (c1 ++ c2)
+    where
+      (m1:ms) = l1
+      (m2:_)  = l2
 
 class (Data a, Typeable a) => StackType a where
   toStack :: a -> StackItem

@@ -164,6 +164,9 @@ define = do
     ws <- gets vmCurrentDefinition
     endDef
     w <- getStack
+    col <- getStack
+    when (col /= SInstruction COLON) $
+      fail $ "No COLON before DEFINE!"
     case w of
       SString name -> do
         st <- get
@@ -184,6 +187,9 @@ recall name = do
 variable :: VM ()
 variable = do
   name <- getArg
+  col <- getStack
+  when (col /= SInstruction COLON) $
+    fail $ "No COLON before VARIABLE!"
   st <- get
   pc <- gets vmPC
   let n = vmNextVariable st
@@ -238,8 +244,9 @@ jumpIf test = do
                     else step
     _ -> fail $ "Condition value is " ++ showType cond ++ ", not Integer!"
 
-getMark :: Marks -> String -> VM ()
-getMark marks name = do
+getMark :: [Marks] -> String -> VM ()
+getMark [] _ = fail $ "Internal error: getMark with empty marks stack!"
+getMark (marks:_) name = do
   case M.lookup name marks of
     Just x -> pushS (SInteger $ fromIntegral x)
     Nothing -> fail $ "Undefined mark: " ++ name

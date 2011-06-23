@@ -104,7 +104,7 @@ doRun path = do
 doDecompile :: FilePath -> IO ()
 doDecompile path = do
   Code marks code <- loadCode path
-  putStrLn $ showMarks marks
+  putStrLn $ showMarks (head marks)
   putStrLn $ unwords $ map showItem code
 
 main = do

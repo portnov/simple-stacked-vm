@@ -26,7 +26,7 @@ emptyState = PState {
 type TParser a = Parsec String ParserState a
 
 code :: [StackItem] -> TParser Code
-code list = return $ Code M.empty list
+code list = return $ Code [M.empty] list
 
 startDefinition :: TParser ()
 startDefinition = do
@@ -63,7 +63,7 @@ addMark :: String -> TParser Code
 addMark name = do
   st <- getState
   let addr = wordsCounter st
-  return $ Code (M.singleton name addr) []
+  return $ Code [M.singleton name addr] []
 
 instr :: Instruction -> TParser Code
 instr i = do

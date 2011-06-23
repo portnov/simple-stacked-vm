@@ -53,18 +53,21 @@ runVM' st forth = evalStateT forth st
 traceVM :: VM () -> IO ()
 traceVM code = runVM' (emptyVMState {vmTraceMode = True}) code
 
-interpretOne :: Marks -> StackItem -> VM ()
+interpretOne :: [Marks] -> StackItem -> VM ()
 interpretOne _ (SInteger x) = push x >> step
 interpretOne _ (SString x)  = push x >> step
 interpretOne m (SInstruction x) = eval m x
 interpretOne _ (Quote x) = pushD x >> step
 
-interpretLocal :: Code -> VM ()
-interpretLocal code = do
+interpretLocal :: Int -> Code -> VM ()
+interpretLocal pc code = do
+  let oldMarks = cMarks code
+      newMarks = shiftMarks pc (last oldMarks)
+      code' = code {cMarks = newMarks:oldMarks}
   st <- get
   let oldPC = vmPC st
   put $ st {vmPC = 0}
-  interpret code
+  interpret code'
   st <- get
   put $ st {vmPC = oldPC}
 
@@ -73,7 +76,7 @@ shiftMarks k = M.map shift
   where
     shift n = n-k
 
-eval :: Marks -> Instruction -> VM ()
+eval :: [Marks] -> Instruction -> VM ()
 eval _ NOP      = step
 eval _ (PUSH x) = pushS x >> step
 eval _ DROP     = pop >> step
@@ -94,7 +97,8 @@ eval _ DEFINE   = define >> step
 eval _ COLON    = push COLON >> step
 eval m (CALL s) = do
                   (Definition pc code) <- recall s
-                  interpretLocal $ Code (shiftMarks pc m) code
+--                   lift $ putStrLn $ "Calling to " ++ show pc
+                  interpretLocal pc $ Code m code
                   step
 eval _ VARIABLE = variable >> step
 eval _ ASSIGN   = assign >> step

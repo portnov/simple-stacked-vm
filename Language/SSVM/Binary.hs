@@ -189,10 +189,10 @@ instance BinaryState BState [StackItem] where
                return (x:next)
 
 dumpCode :: FilePath -> Code -> IO ()
-dumpCode path (Code marks code) = encodeFile path (emptyBState {bMarks = marks}) code
+dumpCode path (Code marks code) = encodeFile path (emptyBState {bMarks = head marks}) code
 
 loadCode :: FilePath -> IO Code
 loadCode path = do
   (code, st) <- decodeFile' path emptyBState
-  return $ Code (bMarks st) code
+  return $ Code [bMarks st] code
 

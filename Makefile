@@ -6,6 +6,6 @@ ssvm: ssvm.hs Language/SSVM/*.hs
 	$(GHC) $<
 
 clean:
-	rm ssvm
-	find . -name *.hi -delete
-	find . -name *.o -delete
+	rm -f ssvm
+	find . -name \*.hi -delete
+	find . -name \*.o -delete

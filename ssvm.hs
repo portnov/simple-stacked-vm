@@ -110,13 +110,8 @@ doRun path = do
 
 doDecompile :: FilePath -> IO ()
 doDecompile path = do
-    Code marks code <- loadCode path
-    putStrLn $ unwords $ zipWith (showOne $ head marks) [1..] code
-  where
-    showOne ms n item =
-      if n `elem` M.elems ms
-        then showItem item ++ " .mark_at_" ++ show n
-        else showItem item
+    code <- loadCode path
+    putStrLn $ showCode code
 
 main = do
   args <- getArgs

@@ -33,6 +33,15 @@ showPrint (SString s)  = s
 showPrint (SInstruction i) = show i
 showPrint (Quote x)    = show x
 
+showCode :: Code -> String
+showCode (Code marks code) =
+    unwords $  zipWith (showOne $ head marks) [1..] code
+  where
+    showOne ms n item =
+      if n `elem` M.elems ms
+        then showItem item ++ " .mark_at_" ++ show n
+        else showItem item
+
 type Stack = [StackItem]
 
 type Marks = M.Map String Int

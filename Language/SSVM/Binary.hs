@@ -1,5 +1,7 @@
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
-module Language.SSVM.Binary where
+module Language.SSVM.Binary
+  (dumpCode, loadCode)
+  where
 
 import Control.Applicative
 import Control.Monad (forM_)
@@ -188,9 +190,11 @@ instance BinaryState BState [StackItem] where
                next <- getUntilEOF
                return (x:next)
 
+-- | Dump bytecode to file
 dumpCode :: FilePath -> Code -> IO ()
 dumpCode path (Code marks code) = encodeFile path (emptyBState {bMarks = head marks}) code
 
+-- | Load bytecode from file
 loadCode :: FilePath -> IO Code
 loadCode path = do
   (code, st) <- decodeFile' path emptyBState

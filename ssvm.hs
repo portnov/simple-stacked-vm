@@ -11,11 +11,13 @@ import Language.SSVM.Parser
 import Language.SSVM.Interpreter
 import Language.SSVM.Binary
 
+-- | Command-line flag
 data Flag =
     Mode Mode
   | Output FilePath
   deriving (Eq, Show)
 
+-- | Working mode
 data Mode =
     Interpret
   | Trace
@@ -26,17 +28,21 @@ data Mode =
   | Help
   deriving (Eq, Show)
 
+-- | config
 data RunMode = RunMode {
   mode :: Mode,
   inputFile :: FilePath,
   outputFile :: Maybe FilePath }
   deriving (Eq, Show)
 
+-- | Default run mode
+defaultMode :: RunMode
 defaultMode = RunMode {
   mode = Run,
   inputFile = "-",
   outputFile = Nothing }
 
+-- | Command-line options description
 options :: [OptDescr Flag]
 options = [
   Option "c" ["compile"]   (NoArg $ Mode Compile)   "compile source code to bytecode",

@@ -1,5 +1,6 @@
 
-module Language.SSVM.Parser where
+module Language.SSVM.Parser
+  (parseVM, parseSourceFile) where
 
 import Data.Monoid
 import qualified Data.Map as M

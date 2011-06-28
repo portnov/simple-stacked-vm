@@ -6,6 +6,7 @@ import Data.Data
 import Data.Monoid
 import qualified Data.Map as M
 
+-- | Stack item
 data StackItem =
     SInteger Integer
   | SString String
@@ -13,6 +14,7 @@ data StackItem =
   | Quote StackItem
   deriving (Eq, Data, Typeable)
 
+-- | Show type of item
 showType :: StackItem -> String
 showType x = show (toConstr x)
 
@@ -40,8 +42,9 @@ showMarks ms = unlines $ map s $ M.assocs ms
   where
     s (k,v) = "\t" ++ k ++ ": " ++ show v
 
+-- | VM code
 data Code = Code {
-  cMarks :: [Marks],
+  cMarks :: [Marks],   -- ^ marks stack
   cCode :: [StackItem] }
   deriving (Eq, Show, Data, Typeable)
 
@@ -74,8 +77,9 @@ instance StackType Instruction where
   fromStack (SInstruction x) = Just x
   fromStack _ = Nothing
 
+-- | VM instructions
 data Instruction =
-    NOP
+    NOP            -- ^ Do nothing
   | PUSH StackItem
   | DROP
   | DUP
@@ -93,7 +97,7 @@ data Instruction =
   | CMP
   | DEFINE
   | COLON
-  | CALL String
+  | CALL String     -- ^ Call named user-defined word
   | VARIABLE
   | ASSIGN
   | READ
@@ -143,20 +147,23 @@ instance Show Instruction where
   show JGE      = "JGE"
   show JLE      = "JLE"
 
+-- | Word definition
 data Definition = Definition Int Stack
   deriving (Eq, Show)
 
+-- | VM state
 data VMState = VMState {
-  vmStack :: Stack,
-  vmCurrentDefinition :: Stack,
-  vmDefinitions :: M.Map String Definition,
-  vmVariables :: M.Map Int StackItem,
-  vmNextVariable :: Int,
-  vmPC :: Int,
-  vmTraceMode :: Bool
+  vmStack :: Stack,                         -- ^ current VM stack
+  vmCurrentDefinition :: Stack,             -- ^ current definition
+  vmDefinitions :: M.Map String Definition, -- ^ already defined words
+  vmVariables :: M.Map Int StackItem,       -- ^ variables values
+  vmNextVariable :: Int,                    -- ^ next variable number
+  vmPC :: Int,                              -- ^ program counter
+  vmTraceMode :: Bool                       -- ^ trace mode
   }
   deriving (Eq, Show)
 
+-- | Starting VM state
 emptyVMState :: VMState
 emptyVMState = VMState {
   vmStack = [],
@@ -167,5 +174,6 @@ emptyVMState = VMState {
   vmPC = 0,
   vmTraceMode = False }
 
+-- | VM monad
 type VM a = StateT VMState IO a
 

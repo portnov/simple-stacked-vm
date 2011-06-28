@@ -1,5 +1,10 @@
 
-module Language.SSVM.Interpreter where
+module Language.SSVM.Interpreter
+  (interpret,
+   runVM,
+   runVM',
+   traceVM
+  ) where
 
 import Control.Monad.State
 import qualified Data.Map as M
@@ -7,6 +12,7 @@ import qualified Data.Map as M
 import Language.SSVM.Types
 import Language.SSVM.Operations
 
+-- | Interpret code
 interpret :: Code -> VM ()
 interpret c@(Code marks code) = do
   t <- gets vmTraceMode
@@ -23,7 +29,7 @@ interpretWith go code = do
          go (code !! pc)
          interpretWith go code
 
-printItem :: StackItem -> VM()
+printItem :: StackItem -> VM ()
 printItem i = do
   pc <- gets vmPC
   lift $ putStr $ show pc
@@ -44,12 +50,14 @@ traceStack (Code marks code) = do
       printStack
       printCurrentDef
 
+-- | Run VM
 runVM :: VM () -> IO ()
 runVM forth = evalStateT forth emptyVMState
 
 runVM' :: VMState -> VM () -> IO ()
 runVM' st forth = evalStateT forth st
 
+-- | Run VM in trace mode
 traceVM :: VM () -> IO ()
 traceVM code = runVM' (emptyVMState {vmTraceMode = True}) code
 
@@ -76,6 +84,7 @@ shiftMarks k = M.map shift
   where
     shift n = n-k
 
+-- | Evaluate one instruction
 eval :: [Marks] -> Instruction -> VM ()
 eval _ NOP      = step
 eval _ (PUSH x) = pushS x >> step

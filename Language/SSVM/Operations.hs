@@ -1,5 +1,16 @@
 {-# LANGUAGE ScopedTypeVariables #-}
-module Language.SSVM.Operations where
+module Language.SSVM.Operations
+  (push, pushS, pushD,
+   pop, dup, swap, over,
+   printStack, printCurrentDef, printF,
+   add, sub, neg, mul, divide, absF,
+   remF, cmpF,
+   variable, recall, assign, readVar, define,
+   goto, jumpIf,
+   mark, getMark,
+   input,
+   step
+  ) where
 
 import Data.Data
 import Data.Char
@@ -8,18 +19,21 @@ import Control.Monad.State
 
 import Language.SSVM.Types
 
+-- | Increment PC
 step :: VM ()
 step = do
   st <- get
   let was = vmPC st
   put $ st {vmPC = was + 1}
 
+-- | Change stack with given function
 withStack :: (Stack -> Stack) -> VM ()
 withStack fn = do
   st <- get
   let stk = vmStack st
   setStack (fn stk)
 
+-- | Change stack with given monadic action
 withStackM :: (Stack -> VM Stack) -> VM ()
 withStackM fn = do
   st <- get
@@ -27,40 +41,51 @@ withStackM fn = do
   stk' <- fn stk
   setStack stk'
 
+-- | Set VM stack
 setStack :: Stack -> VM ()
 setStack stk = do
   st <- get
   put $ st { vmStack = stk }
 
+-- | Push value to the stack
 push :: (StackType a) => a -> VM ()
 push x = withStack (toStack x:)
 
+-- | Push stack item to the stack
 pushS :: StackItem -> VM ()
 pushS x = withStack (x:)
 
+-- | Add item to current definition
 pushD :: StackItem -> VM ()
 pushD x = do
   st <- get
   let def = vmCurrentDefinition st
   put $ st {vmCurrentDefinition = (x:def)}
 
+-- | Empty current definition
 endDef :: VM ()
 endDef = do
   st <- get
   put $ st {vmCurrentDefinition = []}
 
+-- | Drop stack head
+-- (a -- )
 pop :: VM ()
 pop = withStackM pop'
   where
     pop' [] = fail "DROP on empty stack!"
     pop' (x:xs) = return xs
 
+-- | Duplicate stack head
+-- (a -- a a)
 dup :: VM ()
 dup = withStackM dup'
   where
     dup' [] = fail "DUP on empty stack!"
     dup' (x:xs) = return (x:x:xs)
 
+-- | Swap two top items on the stack
+-- (a b -- b a)
 swap :: VM ()
 swap = withStackM swap'
   where
@@ -68,6 +93,7 @@ swap = withStackM swap'
     swap' [_] = fail "SWAP on single-element stack!"
     swap' (x:y:xs) = return (y:x:xs)
 
+-- | (a b -- a b a)
 over :: VM ()
 over = withStackM over'
   where
@@ -75,17 +101,21 @@ over = withStackM over'
     over' [_] = fail "OVER on single-element stack!"
     over' (x:y:xs) = return (y:x:y:xs)
 
+-- | Print stack content
 printStack :: VM ()
 printStack = do
   stk <- gets vmStack
   lift $ putStrLn $ unwords $ map showPrint stk
 
+-- | Print current definition
 printCurrentDef :: VM ()
 printCurrentDef = do
   def <- gets vmCurrentDefinition
   lift $ putStr "Current definition: "
   lift $ putStrLn $ unwords $ map showItem (reverse def)
 
+-- | Get stack head (and drop it from stack)
+-- (a -- )
 getStack :: VM StackItem
 getStack = do
   stk <- gets vmStack
@@ -95,6 +125,7 @@ getStack = do
               setStack xs
               return x
 
+-- | Get stack head (and drop it from stack)
 getArg :: forall a. (StackType a) => VM a
 getArg = do
   stk <- gets vmStack
@@ -107,11 +138,15 @@ getArg = do
                 Nothing -> fail $ "Stack type error: got " ++ showType x ++
                                   " while expecting " ++ show (typeOf (undefined :: a))
 
+-- | Run given function on stack head
+-- (a -- f(a))
 liftF :: (StackType a) => (a -> a) -> VM ()
 liftF fn = do
   x <- getArg
   push (fn x)
 
+-- | Run given operation on two top stack items
+-- (a b -- a `op` b)
 liftF2 :: (StackType a) => (a -> a -> a) -> VM ()
 liftF2 op = do
   y <- getArg
@@ -154,11 +189,14 @@ cmpF = do
                EQ -> 0
                GT -> 1
 
+-- | Print stack head
+-- (a -- )
 printF :: VM ()
 printF = do
   x <- getStack
   lift $ putStr $ showPrint x
 
+-- | Define word
 define :: VM ()
 define = do
     ws <- gets vmCurrentDefinition
@@ -177,6 +215,7 @@ define = do
         put $ st {vmDefinitions = dict'}
       x -> fail $ "New word name is " ++ showType x ++ ", not String!"
 
+-- | Recall word definition
 recall :: String -> VM Definition
 recall name = do
   dict <- gets vmDefinitions
@@ -184,6 +223,7 @@ recall name = do
     Nothing -> fail $ "Unknown word: " ++ name
     Just list -> return list
 
+-- | Define variable
 variable :: VM ()
 variable = do
   name <- getArg
@@ -196,6 +236,8 @@ variable = do
       dict = M.insert name (Definition (pc-1) [SInteger $ fromIntegral n]) (vmDefinitions st)
   put $ st {vmDefinitions = dict, vmNextVariable = n+1}
 
+-- | Assign value to variable
+-- (value variable-number -- )
 assign :: VM ()
 assign = do
   n <- getArg :: VM Integer
@@ -204,6 +246,8 @@ assign = do
   let vars = M.insert (fromIntegral n) value (vmVariables st)
   put $ st {vmVariables = vars}
 
+-- | Read variable value
+-- (variable-number -- value)
 readVar :: VM ()
 readVar = do
   n <- getArg :: VM Integer
@@ -212,6 +256,8 @@ readVar = do
     Nothing -> fail $ "Trying to read variable before assignment: #" ++ show n
     Just value -> pushS value
 
+-- | Read value from stdin
+-- ( -- value)
 input :: VM ()
 input = do
   str <- lift getLine
@@ -219,21 +265,27 @@ input = do
     then pushS (SInteger $ read str)
     else pushS (SString str)
 
+-- | Mark at current PC
+-- ( -- pc)
 mark :: VM ()
 mark = do
   pc <- gets vmPC
   pushS (SInteger $ fromIntegral pc)
 
+-- | Go to named instruction
 branch :: Int -> VM ()
 branch n = do
   st <- get
   put $ st {vmPC = n}
 
+-- | Get PC from stack
+-- (pc -- )
 goto :: VM ()
 goto = do
   n <- getArg :: VM Integer
   branch (fromIntegral n)
 
+-- | Jump to given address if condition is satisfied
 jumpIf :: (Integer -> Bool) -> VM ()
 jumpIf test = do
   addr <- getArg :: VM Integer
@@ -244,9 +296,12 @@ jumpIf test = do
                     else step
     _ -> fail $ "Condition value is " ++ showType cond ++ ", not Integer!"
 
+-- | Get mark by name
+-- ( -- pc)
 getMark :: [Marks] -> String -> VM ()
 getMark [] _ = fail $ "Internal error: getMark with empty marks stack!"
 getMark (marks:_) name = do
   case M.lookup name marks of
     Just x -> pushS (SInteger $ fromIntegral x)
     Nothing -> fail $ "Undefined mark: " ++ name
+

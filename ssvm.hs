@@ -1,5 +1,6 @@
 
 import Control.Monad (when)
+import qualified Data.Map as M
 import System.Environment
 import System.Console.GetOpt
 import System.FilePath
@@ -103,9 +104,13 @@ doRun path = do
 
 doDecompile :: FilePath -> IO ()
 doDecompile path = do
-  Code marks code <- loadCode path
-  putStrLn $ showMarks (head marks)
-  putStrLn $ unwords $ map showItem code
+    Code marks code <- loadCode path
+    putStrLn $ unwords $ zipWith (showOne $ head marks) [1..] code
+  where
+    showOne ms n item =
+      if n `elem` M.elems ms
+        then showItem item ++ " .mark_at_" ++ show n
+        else showItem item
 
 main = do
   args <- getArgs

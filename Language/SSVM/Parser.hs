@@ -1,7 +1,6 @@
 
 module Language.SSVM.Parser where
 
-import Control.Applicative hiding ((<|>))
 import Data.Monoid
 import qualified Data.Map as M
 import Text.Parsec
@@ -41,10 +40,14 @@ endDefinition = do
 pString :: TParser Code
 pString = do
   st <- getState
-  str <- SString <$> stringLiteral baseLanguage
-  if inDefinition st
-    then code [Quote str]
-    else code [str]
+  str <- stringLiteral baseLanguage
+  if newWord st
+    then do
+         putState $ st {newWord = False}
+         code [SString str]
+    else if inDefinition st
+           then code [Quote $ SString str]
+           else code [SString str]
 
 pInteger :: TParser Code
 pInteger = do

@@ -78,7 +78,7 @@ over = withStackM over'
 printStack :: VM ()
 printStack = do
   stk <- gets vmStack
-  lift $ putStrLn $ unwords $ map showItem stk
+  lift $ putStrLn $ unwords $ map showPrint stk
 
 printCurrentDef :: VM ()
 printCurrentDef = do
@@ -157,7 +157,7 @@ cmpF = do
 printF :: VM ()
 printF = do
   x <- getStack
-  lift $ putStr $ showItem x
+  lift $ putStr $ showPrint x
 
 define :: VM ()
 define = do

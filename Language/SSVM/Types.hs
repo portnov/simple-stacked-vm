@@ -20,13 +20,16 @@ instance Show StackItem where
   show (SInteger x) = show x
   show (SString s)  = show s
   show (SInstruction i) = show i
-  show (Quote x) = "'" ++ show x
+  show (Quote x)    = show x
 
 showItem :: StackItem -> String
-showItem (SInteger x) = show x
-showItem (SString x) = x
-showItem (SInstruction x) = show x
-showItem (Quote x) = "'" ++ show x
+showItem = show
+
+showPrint :: StackItem -> String
+showPrint (SInteger x) = show x
+showPrint (SString s)  = s
+showPrint (SInstruction i) = show i
+showPrint (Quote x)    = show x
 
 type Stack = [StackItem]
 

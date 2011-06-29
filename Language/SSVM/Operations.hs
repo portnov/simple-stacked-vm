@@ -182,6 +182,7 @@ cmpF = do
     case (x,y) of
       (SInteger a, SInteger b) -> push (cmp a b)
       (SString a, SString b) -> push (cmp a b)
+      _ -> fail $ "Invalid types on CMP: " ++ showType x ++ ", " ++ showType y
   where
     cmp :: (Ord a) => a -> a -> Integer
     cmp a b = case compare a b of

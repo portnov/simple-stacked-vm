@@ -165,6 +165,7 @@ instance BinaryState BState StackItem where
                                 putZ w
                             else putZ 'S' >> putZ x
   put (SInstruction x) = putZ 'O' >> put x
+  put (SArray _)       = fail "Array literals are not supported"
   put (Quote x)        = putZ 'Q' >> put x
 
   get = do

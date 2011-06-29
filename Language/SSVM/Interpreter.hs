@@ -65,6 +65,7 @@ interpretOne :: [Marks] -> StackItem -> VM ()
 interpretOne _ (SInteger x) = push x >> step
 interpretOne _ (SString x)  = push x >> step
 interpretOne m (SInstruction x) = eval m x
+interpretOne _ (SArray _) = fail "Array literals are not supported"
 interpretOne _ (Quote x) = pushD x >> step
 
 interpretLocal :: Int -> Code -> VM ()

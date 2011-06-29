@@ -16,6 +16,13 @@
 
 : n VARIABLE
 : i VARIABLE
+: arr VARIABLE
+
+5 arr ARRAY
+17 arr 3 [!]
+"test" arr 4 [!]
+arr ? CR
+arr 3 [@] . CR
 
 "Enter number: " .
 INPUT n !

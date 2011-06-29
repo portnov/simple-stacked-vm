@@ -123,4 +123,7 @@ eval _ JGT      = jumpIf (> 0)
 eval _ JLT      = jumpIf (< 0)
 eval _ JGE      = jumpIf (>= 0)
 eval _ JLE      = jumpIf (<= 0)
+eval _ ARRAY    = allocArray >> step
+eval _ READ_ARRAY   = readArray   >> step
+eval _ ASSIGN_ARRAY = assignArray >> step
 

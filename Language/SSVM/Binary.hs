@@ -114,6 +114,9 @@ instance BinaryState BState Instruction where
   put JLT      = byte 29
   put JGE      = byte 30
   put JLE      = byte 31
+  put ARRAY    = byte 32
+  put READ_ARRAY   = byte 33
+  put ASSIGN_ARRAY = byte 34
 
   get = do
     c <- getZ :: Get Word8
@@ -150,6 +153,9 @@ instance BinaryState BState Instruction where
       29 -> return JLT
       30 -> return JGE
       31 -> return JLE
+      32 -> return ARRAY
+      33 -> return READ_ARRAY
+      34 -> return ASSIGN_ARRAY
       _ -> fail $ "Unknown opcode: " ++ show c
 
 instance BinaryState BState StackItem where

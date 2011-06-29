@@ -4,13 +4,17 @@ module Language.SSVM.Types where
 import Control.Monad.State
 import Data.Data
 import Data.Monoid
+import Data.Array
 import qualified Data.Map as M
+
+type DArray = Array Int StackItem
 
 -- | Stack item
 data StackItem =
     SInteger Integer
   | SString String
   | SInstruction Instruction
+  | SArray DArray
   | Quote StackItem
   deriving (Eq, Data, Typeable)
 
@@ -21,6 +25,7 @@ showType x = show (toConstr x)
 instance Show StackItem where
   show (SInteger x) = show x
   show (SString s)  = show s
+  show (SArray a)   = "[" ++ unwords (map show $ elems a) ++ "]"
   show (SInstruction i) = show i
   show (Quote x)    = show x
 
@@ -30,6 +35,7 @@ showItem = show
 showPrint :: StackItem -> String
 showPrint (SInteger x) = show x
 showPrint (SString s)  = s
+showPrint (SArray a)   = "[" ++ unwords (map show $ elems a) ++ "]"
 showPrint (SInstruction i) = show i
 showPrint (Quote x)    = show x
 
@@ -76,6 +82,12 @@ instance StackType Integer where
   fromStack (SInteger x) = Just x
   fromStack _ = Nothing
 
+instance StackType Int where
+  toStack = SInteger . fromIntegral
+
+  fromStack (SInteger x) = Just (fromIntegral x)
+  fromStack _            = Nothing
+
 instance StackType String where
   toStack = SString
 
@@ -87,6 +99,12 @@ instance StackType Instruction where
 
   fromStack (SInstruction x) = Just x
   fromStack _ = Nothing
+
+instance StackType DArray where
+  toStack = SArray
+
+  fromStack (SArray a) = Just a
+  fromStack _          = Nothing
 
 -- | VM instructions
 data Instruction =
@@ -122,6 +140,9 @@ data Instruction =
   | JLT
   | JGE
   | JLE
+  | ARRAY
+  | READ_ARRAY
+  | ASSIGN_ARRAY
   deriving (Eq, Data, Typeable)
 
 instance Show Instruction where
@@ -157,6 +178,9 @@ instance Show Instruction where
   show JLT      = "JLT"
   show JGE      = "JGE"
   show JLE      = "JLE"
+  show ARRAY    = "ARRAY"
+  show READ_ARRAY   = "[@]"
+  show ASSIGN_ARRAY = "[!]"
 
 -- | Word definition
 data Definition = Definition Int Stack

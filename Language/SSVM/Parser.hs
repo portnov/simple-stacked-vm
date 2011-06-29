@@ -109,6 +109,9 @@ pWord = do
     "JLT"  -> instr JLT
     "JGE"  -> instr JGE
     "JLE"  -> instr JLE
+    "ARRAY" -> instr ARRAY
+    "[@]"   -> instr READ_ARRAY
+    "[!]"   -> instr ASSIGN_ARRAY
     _ | head word == '@' -> instr (GETMARK $ tail word)
       | otherwise -> do
          st <- getState

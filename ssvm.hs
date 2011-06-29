@@ -1,6 +1,5 @@
 
 import Control.Monad (when)
-import qualified Data.Map as M
 import System.Environment
 import System.Console.GetOpt
 import System.FilePath

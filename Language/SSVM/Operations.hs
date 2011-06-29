@@ -6,6 +6,7 @@ module Language.SSVM.Operations
    add, sub, neg, mul, divide, absF,
    remF, cmpF,
    variable, recall, assign, readVar, define,
+   allocArray, readArray, assignArray,
    goto, jumpIf,
    mark, getMark,
    input,
@@ -14,6 +15,7 @@ module Language.SSVM.Operations
 
 import Data.Data
 import Data.Char
+import Data.Array
 import qualified Data.Map as M
 import Control.Monad.State
 
@@ -241,21 +243,61 @@ variable = do
 -- (value variable-number -- )
 assign :: VM ()
 assign = do
-  n <- getArg :: VM Integer
+  n <- getArg
   value <- getStack
   st <- get
-  let vars = M.insert (fromIntegral n) value (vmVariables st)
+  let vars = M.insert n value (vmVariables st)
   put $ st {vmVariables = vars}
 
 -- | Read variable value
 -- (variable-number -- value)
 readVar :: VM ()
 readVar = do
-  n <- getArg :: VM Integer
+  n <- getArg
   vars <- gets vmVariables
-  case M.lookup (fromIntegral n) vars of
+  case M.lookup n vars of
     Nothing -> fail $ "Trying to read variable before assignment: #" ++ show n
     Just value -> pushS value
+
+-- | Allocate an array
+-- (size variable-number -- )
+allocArray :: VM ()
+allocArray = do
+  a  <- getArg
+  sz <- getArg :: VM Int
+  st <- get
+  let arr = listArray (1,sz) (replicate sz $ SInteger 0)
+      vars = M.insert a (SArray arr) (vmVariables st)
+  put $ st {vmVariables = vars}
+
+-- | Assign value to array item.
+-- (value array-variable-number index -- )
+assignArray :: VM ()
+assignArray = do
+  i <- getArg
+  a <- getArg
+  value <- getStack
+  st <- get
+  let vars = vmVariables st
+  case M.lookup a vars of
+    Just (SArray arr) -> do
+                  let vars' = M.insert a (SArray (arr // [(i, value)])) vars
+                  put $ st {vmVariables = vars'}
+    Just x -> fail $ "On [!]: variable type is " ++ showType x ++ ", not Array!"
+    Nothing -> fail $ "Trying to assign array item before array allocation!"
+
+-- | Read item from array.
+-- (array-variable-number index -- value)
+readArray :: VM ()
+readArray = do
+  i <- getArg
+  a <- getArg
+  st <- get
+  let vars = vmVariables st
+  case M.lookup a vars of
+    Just (SArray arr) -> pushS (arr ! i)
+    Just x -> fail $ "On [@]: variable type is " ++ showType x ++ ", not Array!"
+    Nothing ->  fail "Trying to read array item before array allocation!"
 
 -- | Read value from stdin
 -- ( -- value)

@@ -23,7 +23,7 @@ library
 
   Build-Depends:  base >= 3 && <= 5, containers,
                   mtl > 1, filepath, parsec >= 3,
-                  binary-state
+                  binary-state, array
 
   ghc-options: -fwarn-unused-imports
 

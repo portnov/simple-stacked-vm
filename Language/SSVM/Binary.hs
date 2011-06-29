@@ -175,6 +175,7 @@ instance BinaryState BState StackItem where
       'O' -> SInstruction <$> get
       'Q' -> Quote <$> get
       'W' -> SString <$> (wordName =<< getZ)
+      _   -> fail $ "Unknown stack item type: " ++ [c]
 
 instance BinaryState BState [StackItem] where
   put list = forM_ list put

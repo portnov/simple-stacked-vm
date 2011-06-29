@@ -37,11 +37,13 @@ showCode :: Code -> String
 showCode (Code marks code) =
     unwords $  zipWith (showOne $ head marks) [1..] code
   where
-    showOne ms n item =
-      if n `elem` M.elems ms
-        then showItem item ++ " .mark_at_" ++ show n
-        else showItem item
+    showOne ms n item = showItem item ++ concatMap (" ."++) (lookupRev n $ M.assocs ms)
 
+    lookupRev _ [] = []
+    lookupRev key ((v,k):other) 
+                  | key == k  = v: lookupRev key other
+                  | otherwise = lookupRev key other
+    
 type Stack = [StackItem]
 
 type Marks = M.Map String Int

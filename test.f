@@ -21,6 +21,7 @@
 5 arr ARRAY
 17 arr 3 [!]
 "test" arr 4 [!]
+"abc" arr @ 2 [!] arr !
 arr ? CR
 arr 3 [@] . CR
 

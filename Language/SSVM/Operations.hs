@@ -271,33 +271,43 @@ allocArray = do
   put $ st {vmVariables = vars}
 
 -- | Assign value to array item.
--- (value array-variable-number index -- )
+-- (value array-or-variable-number index -- )
 assignArray :: VM ()
 assignArray = do
   i <- getArg
-  a <- getArg
+  a <- getStack
   value <- getStack
-  st <- get
-  let vars = vmVariables st
-  case M.lookup a vars of
-    Just (SArray arr) -> do
-                  let vars' = M.insert a (SArray (arr // [(i, value)])) vars
-                  put $ st {vmVariables = vars'}
-    Just x -> fail $ "On [!]: variable type is " ++ showType x ++ ", not Array!"
-    Nothing -> fail $ "Trying to assign array item before array allocation!"
+  case a of
+    SInteger n -> do
+      st <- get
+      let v = fromIntegral n :: Int
+          vars = vmVariables st
+      case M.lookup v vars of
+        Just (SArray arr) -> do
+                      let vars' = M.insert v (SArray (arr // [(i, value)])) vars
+                      put $ st {vmVariables = vars'}
+        Just x ->  fail $ "[!]: variable type is " ++ showType x ++ ", not Array!"
+        Nothing -> fail $ "Trying to assign array item before array allocation!"
+    SArray arr ->  push $ arr // [(i, value)]
+    _ ->           fail $ "[!]: second argument is not array nor variable number, but " ++ showType a
 
 -- | Read item from array.
--- (array-variable-number index -- value)
+-- (array-or-variable-number index -- value)
 readArray :: VM ()
 readArray = do
   i <- getArg
-  a <- getArg
-  st <- get
-  let vars = vmVariables st
-  case M.lookup a vars of
-    Just (SArray arr) -> pushS (arr ! i)
-    Just x -> fail $ "On [@]: variable type is " ++ showType x ++ ", not Array!"
-    Nothing ->  fail "Trying to read array item before array allocation!"
+  a <- getStack
+  case a of
+    SInteger n -> do
+      st <- get
+      let v = fromIntegral n :: Int
+          vars = vmVariables st
+      case M.lookup v vars of
+        Just (SArray arr) -> pushS (arr ! i)
+        Just x ->   fail $ "[@]: variable type is " ++ showType x ++ ", not Array!"
+        Nothing ->  fail "Trying to read array item before array allocation!"
+    SArray arr ->   pushS (arr ! i)
+    _ ->            fail $ "[@]: second argument is not array nor variable number, but " ++ showType a
 
 -- | Read value from stdin
 -- ( -- value)

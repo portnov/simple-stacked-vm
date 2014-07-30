@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, TypeSynonymInstances #-}
+{-# LANGUAGE DeriveDataTypeable, TypeSynonymInstances, FlexibleInstances #-}
 module Language.SSVM.Types where
 
 import Control.Monad.State
